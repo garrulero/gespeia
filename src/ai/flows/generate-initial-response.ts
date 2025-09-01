@@ -11,6 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getBeverageStock } from '@/services/beverage-service';
+import { addOrder } from '@/services/order-service';
 
 const getBeverageStockTool = ai.defineTool(
     {
@@ -26,6 +27,30 @@ const getBeverageStockTool = ai.defineTool(
     },
     async () => {
         return getBeverageStock();
+    }
+);
+
+const createOrderTool = ai.defineTool(
+    {
+        name: 'createOrder',
+        description: 'Create a new order for one or more beverages. This also adjusts the stock.',
+        inputSchema: z.object({
+            items: z.array(z.object({
+                productName: z.string().describe("The name of the product to order."),
+                quantity: z.number().int().positive().describe("The quantity of the product to order."),
+            })).describe("A list of items to include in the order.")
+        }),
+        outputSchema: z.object({
+            orderId: z.string().describe("The ID of the newly created order."),
+            total: z.number().describe("The total price of the order."),
+        }),
+    },
+    async ({items}) => {
+        const order = await addOrder(items);
+        return {
+            orderId: order.id,
+            total: order.total,
+        }
     }
 );
 
@@ -54,11 +79,13 @@ const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: z.any()},
   output: {schema: GenerateInitialResponseOutputSchema},
-  tools: [getBeverageStockTool],
+  tools: [getBeverageStockTool, createOrderTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
 You must respond in Spanish.
-You can answer questions about the products.
+You can answer questions about the products and create orders for the user.
 If you need information about the beverages, use the getBeverageStock tool.
+If the user wants to place an order, use the createOrder tool.
+When an order is created, confirm it with the user by mentioning the order ID and the total price.
 
 Continue the conversation.
 

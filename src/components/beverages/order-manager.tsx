@@ -1,17 +1,213 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, ShoppingCart } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getBeverageStock, Product } from '@/services/beverage-service';
+import { addOrder, getOrders, Order, OrderItem } from '@/services/order-service';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '../ui/badge';
+
+const orderItemSchema = z.object({
+  productName: z.string().min(1, "Product is required"),
+  quantity: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+});
+
+const orderSchema = z.object({
+  items: z.array(orderItemSchema).min(1, "Order must have at least one item"),
+});
 
 export default function OrderManager() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const fetchOrdersAndProducts = async () => {
+    const [fetchedOrders, fetchedProducts] = await Promise.all([
+      getOrders(),
+      getBeverageStock(),
+    ]);
+    setOrders(fetchedOrders);
+    setProducts(fetchedProducts);
+  };
+
+  useEffect(() => {
+    fetchOrdersAndProducts();
+  }, []);
+
+  const form = useForm<z.infer<typeof orderSchema>>({
+    resolver: zodResolver(orderSchema),
+    defaultValues: {
+      items: [{ productName: '', quantity: 1 }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
+
+  const onSubmit = async (values: z.infer<typeof orderSchema>) => {
+    try {
+      await addOrder(values.items);
+      await fetchOrdersAndProducts();
+      form.reset();
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error instanceof Error ? error.message : "Failed to create order.",
+      });
+    }
+  };
+
   return (
     <Card className="mt-4">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Pedidos</CardTitle>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <PlusCircle className="mr-2" />
+              Crear Pedido
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Crear Nuevo Pedido</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-end gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.productName`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Producto</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un producto" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {products.map(p => (
+                                <SelectItem key={p.name} value={p.name}>
+                                  {p.name} ({p.brand}) - En stock: {p.stock}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.quantity`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cantidad</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
+                        Eliminar
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ productName: '', quantity: 1 })}
+                >
+                  Añadir otro producto
+                </Button>
+                <Button type="submit" className="w-full">
+                  Crear Pedido
+                </Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Aquí se mostrará la gestión de pedidos.
-        </p>
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>ID Pedido</TableHead>
+                    <TableHead>Artículos</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Estado</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {orders.map(order => (
+                    <TableRow key={order.id}>
+                        <TableCell className="font-mono text-xs">{order.id}</TableCell>
+                        <TableCell>
+                            {order.items.map(item => (
+                                <div key={item.productName}>{item.quantity} x {item.productName}</div>
+                            ))}
+                        </TableCell>
+                        <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+                        <TableCell>
+                            <Badge>{order.status}</Badge>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+        {orders.length === 0 && (
+            <div className="text-center text-muted-foreground py-8">
+                <ShoppingCart className="mx-auto h-12 w-12" />
+                <p>No hay pedidos todavía.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );

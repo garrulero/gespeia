@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, RefreshCw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -46,15 +46,16 @@ export default function ProductManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  const fetchProducts = async () => {
+    const fetchedProducts = await getBeverageStock();
+    setProducts(fetchedProducts);
+  };
+  
   useEffect(() => {
-    async function fetchProducts() {
-      const fetchedProducts = await getBeverageStock();
-      setProducts(fetchedProducts);
-    }
     fetchProducts();
   }, []);
 
-  const form = useForm<Product>({
+  const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
@@ -64,11 +65,10 @@ export default function ProductManager() {
     },
   });
 
-  const onSubmit = async (values: Product) => {
+  const onSubmit = async (values: z.infer<typeof productSchema>) => {
     try {
         await addBeverage(values);
-        const updatedProducts = await getBeverageStock();
-        setProducts(updatedProducts);
+        await fetchProducts();
         form.reset();
         setIsDialogOpen(false);
     } catch (error) {
@@ -84,78 +84,83 @@ export default function ProductManager() {
     <Card className="mt-4">
     <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Bebidas</CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-            <Button size="sm">
-            <PlusCircle className="mr-2" />
-            Añadir Producto
+        <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={fetchProducts}>
+                <RefreshCw />
             </Button>
-        </DialogTrigger>
-        <DialogContent>
-            <DialogHeader>
-            <DialogTitle>Añadir Nueva Bebida</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ej: Cola" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="brand"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Marca</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ej: Coca-Cola" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Precio</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Stock</FormLabel>
-                    <FormControl>
-                        <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <Button type="submit" className="w-full">
-                Añadir
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                <PlusCircle className="mr-2" />
+                Añadir Producto
                 </Button>
-            </form>
-            </Form>
-        </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle>Añadir Nueva Bebida</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Ej: Cola" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Marca</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Ej: Coca-Cola" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Precio</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="stock"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Stock</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <Button type="submit" className="w-full">
+                    Añadir
+                    </Button>
+                </form>
+                </Form>
+            </DialogContent>
+            </Dialog>
+        </div>
     </CardHeader>
     <CardContent>
         <Table>

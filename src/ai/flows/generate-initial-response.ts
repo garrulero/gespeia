@@ -33,13 +33,13 @@ export async function generateInitialResponse(input: GenerateInitialResponseInpu
 
 const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
-  input: {schema: GenerateInitialResponseInputSchema},
+  input: {schema: z.any()},
   output: {schema: GenerateInitialResponseOutputSchema},
   prompt: `You are a helpful chat assistant. Continue the conversation.
 
 {{#each history}}
-{{#if (eq this.role "user")}}From user: {{this.content}}{{/if}}
-{{#if (eq this.role "assistant")}}Your response: {{this.content}}{{/if}}
+{{#if this.role.user}}From user: {{this.content}}{{/if}}
+{{#if this.role.assistant}}Your response: {{this.content}}{{/if}}
 {{/each}}
 
 New user message:
@@ -53,7 +53,18 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async input => {
-    const {output} = await initialResponsePrompt(input);
+    // Transform the history to a format that Handlebars can use without an 'eq' helper.
+    const transformedHistory = input.history.map(m => ({
+        content: m.content,
+        role: {
+            user: m.role === 'user',
+            assistant: m.role === 'assistant'
+        }
+    }));
+    const {output} = await initialResponsePrompt({
+        history: transformedHistory,
+        message: input.message
+    });
     return output!;
   }
 );

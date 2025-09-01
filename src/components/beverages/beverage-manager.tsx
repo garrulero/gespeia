@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import {
@@ -31,6 +31,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { getBeverageStock, addBeverage } from '@/services/beverage-service';
+import { useToast } from '@/hooks/use-toast';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -41,16 +43,18 @@ const productSchema = z.object({
 
 type Product = z.infer<typeof productSchema>;
 
-const initialProducts: Product[] = [
-    { name: 'Cola', brand: 'Coca-Cola', price: 1.5, stock: 100 },
-    { name: 'Orange Juice', brand: 'Minute Maid', price: 2, stock: 80 },
-    { name: 'Water', brand: 'Dasani', price: 1, stock: 200 },
-    { name: 'Lemonade', brand: 'Simply', price: 2.5, stock: 50 },
-];
-
 export default function BeverageManager() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const fetchedProducts = await getBeverageStock();
+      setProducts(fetchedProducts);
+    }
+    fetchProducts();
+  }, []);
 
   const form = useForm<Product>({
     resolver: zodResolver(productSchema),
@@ -62,10 +66,19 @@ export default function BeverageManager() {
     },
   });
 
-  const onSubmit = (values: Product) => {
-    setProducts(prev => [...prev, values]);
-    form.reset();
-    setIsDialogOpen(false);
+  const onSubmit = async (values: Product) => {
+    try {
+        const updatedProducts = await addBeverage(values);
+        setProducts(updatedProducts);
+        form.reset();
+        setIsDialogOpen(false);
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to add product."
+        })
+    }
   };
 
   return (

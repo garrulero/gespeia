@@ -137,22 +137,6 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async (input) => {
-    // Handle initial greeting OUTSIDE of the main prompt logic.
-    if (input.history.length === 0 && input.activeClientPhone) {
-        const client = await findOrCreateClientByPhone(input.activeClientPhone);
-        const greetingPrompt = ai.definePrompt({
-            name: 'greetingPrompt',
-            prompt: `You are a helpful chat assistant for a beverage distribution company. You must respond in Spanish.
-A user has just started a conversation. Greet them by name and ask how you can help.
-Client Name: "${client.name}"
-User Message: "${input.message}"
-`,
-        });
-        const { text } = await greetingPrompt();
-        return { response: text };
-    }
-
-
     let llmResponse = await initialResponsePrompt(input);
     
     while (llmResponse.toolRequest) {

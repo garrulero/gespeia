@@ -87,10 +87,11 @@ const findClientByNameTool = ai.defineTool(
         phone: z.string(),
         address: z.string(),
       })
-      .optional(),
+      .nullable(),
   },
   async ({ name }) => {
-    return findClientByName(name);
+    const client = await findClientByName(name);
+    return client || null;
   }
 );
 

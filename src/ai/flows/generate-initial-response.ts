@@ -142,13 +142,13 @@ const generateInitialResponseFlow = ai.defineFlow(
         const greetingPrompt = ai.definePrompt({
             name: 'greetingPrompt',
             prompt: `You are a helpful chat assistant for a beverage distribution company. You must respond in Spanish.
-            A user has just started a conversation. Greet them by name and ask how you can help.
-            Client Name: "${client.name}"
-            User Message: "${input.message}"
-            `,
+A user has just started a conversation. Greet them by name and ask how you can help.
+Client Name: "${client.name}"
+User Message: "${input.message}"
+`,
         });
-        const llmResponse = await greetingPrompt();
-        return { response: llmResponse.text };
+        const { text } = await greetingPrompt();
+        return { response: text };
     }
 
 

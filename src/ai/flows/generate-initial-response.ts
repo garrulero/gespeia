@@ -128,8 +128,7 @@ Continue the conversation.
 
 {{#if history}}
 {{#each history}}
-{{#if (eq this.role 'user')}}From user: {{this.content}}{{/if}}
-{{#if (eq this.role 'assistant')}}Your response: {{this.content}}{{/if}}
+{{this.role}}: {{this.content}}
 {{/each}}
 {{/if}}
 
@@ -145,9 +144,9 @@ const generateInitialResponseFlow = ai.defineFlow(
   },
   async input => {
     let llmResponse = await initialResponsePrompt({
-      history: input.history.length > 0 ? input.history : null, // Pass null if history is empty
-      message: input.message,
-      activeClientPhone: input.activeClientPhone,
+        history: input.history.length > 0 ? input.history : null,
+        message: input.message,
+        activeClientPhone: input.activeClientPhone,
     });
     
     while (llmResponse.toolRequest) {

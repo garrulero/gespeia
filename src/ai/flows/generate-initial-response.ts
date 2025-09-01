@@ -10,6 +10,25 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getBeverageStock } from '@/services/beverage-service';
+
+const getBeverageStockTool = ai.defineTool(
+    {
+        name: 'getBeverageStock',
+        description: 'Get the stock of all beverages available.',
+        inputSchema: z.object({}),
+        outputSchema: z.array(z.object({
+            name: z.string(),
+            brand: z.string(),
+            price: z.number(),
+            stock: z.number(),
+        })),
+    },
+    async () => {
+        return getBeverageStock();
+    }
+);
+
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
@@ -35,7 +54,12 @@ const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: z.any()},
   output: {schema: GenerateInitialResponseOutputSchema},
-  prompt: `You are a helpful chat assistant. Continue the conversation.
+  tools: [getBeverageStockTool],
+  prompt: `You are a helpful chat assistant for a beverage distribution company.
+You can answer questions about the products.
+If you need information about the beverages, use the getBeverageStock tool.
+
+Continue the conversation.
 
 {{#each history}}
 {{#if this.role.user}}From user: {{this.content}}{{/if}}

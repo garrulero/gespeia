@@ -80,7 +80,7 @@ export function DebugView({ events }: DebugViewProps) {
                         </AccordionTrigger>
                         <AccordionContent>
                             <pre className="text-sm bg-muted p-2 rounded-md overflow-x-auto">
-                                {JSON.stringify(event.data || event.message, null, 2)}
+                                {JSON.stringify(event.data, null, 2) || event.message}
                             </pre>
                         </AccordionContent>
                     </AccordionItem>

@@ -191,17 +191,19 @@ const generateInitialResponseFlow = ai.defineFlow(
 
     while (llmResponse.toolRequest) {
       
+      // Step 1: Log the tool requests immediately
       llmResponse.toolRequest.requests.forEach(req => {
         toolEvents.push({ tool: req.tool, args: req.input });
       });
 
+      // Step 2: Execute the tools
       const toolResponse = await llmResponse.toolRequest.next();
 
+      // Step 3: Match the tool responses with the logged requests and add the output
       if (toolResponse.toolCalls) {
         toolResponse.toolCalls.forEach((call) => {
-          // Find the corresponding tool request and add the output
           const matchingEvent = toolEvents.find(
-            (event) => event.tool === call.tool && !event.output
+            (event) => event.tool === call.tool && event.output === undefined // Find the first event for this tool that doesn't have an output yet
           );
           if (matchingEvent) {
             matchingEvent.output = call.output;
@@ -223,4 +225,3 @@ const generateInitialResponseFlow = ai.defineFlow(
     };
   }
 );
-

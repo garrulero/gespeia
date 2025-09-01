@@ -12,7 +12,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getBeverageStock } from '@/services/beverage-service';
 import { addOrder } from '@/services/order-service';
-import { getClients, findClientByName, addClient } from '@/services/client-service';
+import { findOrCreateClientByPhone } from '@/services/client-service';
+
 
 const getBeverageStockTool = ai.defineTool(
     {
@@ -56,61 +57,20 @@ const createOrderTool = ai.defineTool(
     }
 );
 
-const listClientsTool = ai.defineTool(
+const findOrCreateClientByPhoneTool = ai.defineTool(
   {
-    name: 'listClients',
-    description: 'Get a list of all registered clients.',
-    inputSchema: z.object({}),
-    outputSchema: z.array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
-      })
-    ),
-  },
-  async () => {
-    return getClients();
-  }
-);
-
-const findClientByNameTool = ai.defineTool(
-  {
-    name: 'findClientByName',
-    description: 'Find a client by their name.',
-    inputSchema: z.object({ name: z.string().describe('The name of the client to search for.') }),
-    outputSchema: z
-      .object({
-        id: z.string(),
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
-      })
-      .nullable(),
-  },
-  async ({ name }) => {
-    const client = await findClientByName(name);
-    return client || null;
-  }
-);
-
-const createClientTool = ai.defineTool(
-  {
-    name: 'createClient',
-    description: 'Create a new client.',
-    inputSchema: z.object({
-      name: z.string().describe('The full name of the client.'),
-      phone: z.string().describe('The phone number of the client.'),
-      address: z.string().describe('The shipping address for the client.'),
-    }),
+    name: 'findOrCreateClientByPhone',
+    description: "Finds a client by their phone number. If the client doesn't exist, it creates a new one.",
+    inputSchema: z.object({ phone: z.string().describe('The phone number of the client.') }),
     outputSchema: z.object({
-      id: z.string(),
-      name: z.string(),
-    }),
+        id: z.string(),
+        name: z.string(),
+        phone: z.string(),
+        address: z.string(),
+      }),
   },
-  async (input) => {
-    return addClient(input);
+  async ({ phone }) => {
+    return findOrCreateClientByPhone(phone);
   }
 );
 
@@ -123,6 +83,7 @@ const MessageSchema = z.object({
 const GenerateInitialResponseInputSchema = z.object({
   history: z.array(MessageSchema).describe("The history of the conversation so far."),
   message: z.string().describe('The user message to respond to.'),
+  activeClientPhone: z.string().nullable().describe('The phone number of the currently active client, if any.'),
 });
 export type GenerateInitialResponseInput = z.infer<typeof GenerateInitialResponseInputSchema>;
 
@@ -142,21 +103,18 @@ export async function generateInitialResponse(input: GenerateInitialResponseInpu
 const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: z.any()},
-  tools: [getBeverageStockTool, createOrderTool, listClientsTool, findClientByNameTool, createClientTool],
+  tools: [getBeverageStockTool, createOrderTool, findOrCreateClientByPhoneTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
 You must respond in Spanish.
 You can answer questions about products and create orders.
 
 **Order Process:**
-1.  **Identify Client**: Before creating an order, you MUST know who the client is.
-    - Ask the user for their client name (e.g., "¿A nombre de qué cliente se hará el pedido?").
-    - Use the \`findClientByName\` tool to check if they exist.
-2.  **Client Not Found**: If the \`findClientByName\` tool returns \`null\`, you MUST ask the user for their full name, phone number, and address to register them.
-    - Once you have the information, use the \`createClient\` tool.
-    - After creating the client, confirm with the user and proceed with their original order request using the new client's ID.
-3.  **Create Order**: Once the client is identified (either found or newly created), use the \`createOrder\` tool to place the order. You must provide the \`clientId\`.
-4.  **Stock Issues**: If there is not enough stock for an item, inform the user of the available quantity and ask if they want to proceed with that amount. If they confirm, you MUST use the \`createOrder\` tool with the adjusted quantity.
-5.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
+1.  **Check for Active Client**: Before creating an order, you MUST check if there is an \`activeClientPhone\`.
+2.  **No Active Client**: If \`activeClientPhone\` is null or empty, you MUST tell the user they need to select a client first using the button in the header. DO NOT ask for their details in the chat.
+3.  **Get Client ID**: If there is an \`activeClientPhone\`, use the \`findOrCreateClientByPhone\` tool to get the client's ID.
+4.  **Create Order**: Once you have the client ID, use the \`createOrder\` tool to place the order. You must provide the \`clientId\`.
+5.  **Stock Issues**: If there is not enough stock for an item, inform the user of the available quantity and ask if they want to proceed with that amount.
+6.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
 
 **General Rules:**
 - If you need information about beverages, use the \`getBeverageStock\` tool.
@@ -189,7 +147,8 @@ const generateInitialResponseFlow = ai.defineFlow(
 
     let llmResponse = await initialResponsePrompt({
       history: transformedHistory,
-      message: input.message
+      message: input.message,
+      activeClientPhone: input.activeClientPhone,
     });
     
     while (llmResponse.toolRequest) {

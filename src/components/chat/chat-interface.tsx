@@ -9,12 +9,39 @@ import { GeminiLogo } from '../icons/gemini-logo';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DebugView } from './debug-view';
+import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { User } from 'lucide-react';
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any[]>([]);
+  const [activeClient, setActiveClient] = useState<string | null>(null);
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+  const [clientPhoneInput, setClientPhoneInput] = useState("");
+
   const { toast } = useToast();
+
+  const handleSetClient = () => {
+    if (clientPhoneInput) {
+      setActiveClient(clientPhoneInput);
+      setIsClientDialogOpen(false);
+      toast({
+        title: "Cliente seleccionado",
+        description: `Los pedidos se realizarán para el teléfono: ${clientPhoneInput}`,
+      });
+    }
+  };
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -29,7 +56,7 @@ export default function ChatInterface() {
     setMessages(newMessages);
     setIsLoading(true);
 
-    const result = await getGeminiResponse(newMessages, text);
+    const result = await getGeminiResponse(newMessages, text, activeClient);
     
     if (result.success && result.response) {
       const assistantMessage: Message = {
@@ -77,9 +104,46 @@ export default function ChatInterface() {
 
   return (
     <div className="flex h-screen w-full flex-col bg-background">
-      <header className="flex items-center gap-3 border-b bg-primary px-4 py-3 text-primary-foreground shadow-md">
-        <GeminiLogo className="h-8 w-8" />
-        <h1 className="text-xl font-bold">ChatGemini</h1>
+      <header className="flex items-center justify-between border-b bg-primary px-4 py-3 text-primary-foreground shadow-md">
+        <div className="flex items-center gap-3">
+            <GeminiLogo className="h-8 w-8" />
+            <h1 className="text-xl font-bold">ChatGemini</h1>
+        </div>
+        <div className="flex items-center gap-2">
+            {activeClient && (
+                <div className="flex items-center gap-2 text-sm bg-primary-foreground/20 px-3 py-1 rounded-full">
+                    <User className="h-4 w-4" />
+                    <span>{activeClient}</span>
+                </div>
+            )}
+            <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="secondary" size="sm">Seleccionar Cliente</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Seleccionar o Crear Cliente</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="phone" className="text-right">
+                                Teléfono
+                            </Label>
+                            <Input
+                                id="phone"
+                                value={clientPhoneInput}
+                                onChange={(e) => setClientPhoneInput(e.target.value)}
+                                className="col-span-3"
+                                placeholder="Número de teléfono ficticio"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSetClient}>Guardar Cliente</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
       </header>
       <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
         <TabsList className="grid w-full grid-cols-2">

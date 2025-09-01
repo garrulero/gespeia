@@ -25,6 +25,10 @@ export async function findClientByName(name: string): Promise<Client | undefined
     return Promise.resolve(clients.find(c => c.name.toLowerCase() === name.toLowerCase()));
 }
 
+export async function findClientByPhone(phone: string): Promise<Client | undefined> {
+    return Promise.resolve(clients.find(c => c.phone === phone));
+}
+
 export async function addClient(clientData: Omit<Client, 'id'>): Promise<Client> {
     const newClient: Client = {
         id: crypto.randomUUID(),
@@ -32,4 +36,18 @@ export async function addClient(clientData: Omit<Client, 'id'>): Promise<Client>
     };
     clients.push(newClient);
     return Promise.resolve(newClient);
+}
+
+export async function findOrCreateClientByPhone(phone: string): Promise<Client> {
+    let client = await findClientByPhone(phone);
+    if (client) {
+        return client;
+    }
+
+    const newClient = await addClient({
+        name: `Cliente ${phone}`,
+        phone: phone,
+        address: 'N/A'
+    });
+    return newClient;
 }

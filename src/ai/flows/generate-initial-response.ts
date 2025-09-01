@@ -114,6 +114,7 @@ const GenerateInitialResponseOutputSchema = z.object({
   toolCalls: z.array(z.object({
     tool: z.string(),
     args: z.any(),
+    output: z.any().optional(),
   })).optional(),
 });
 export type GenerateInitialResponseOutput = z.infer<typeof GenerateInitialResponseOutputSchema>;
@@ -171,32 +172,36 @@ const generateInitialResponseFlow = ai.defineFlow(
   },
   async (input) => {
     let llmResponse = await initialResponsePrompt(input);
-    const toolCalls: { tool: string; args: any }[] = [];
+    const toolEvents: { tool: string; args: any; output?: any }[] = [];
 
-    if (llmResponse.toolRequest) {
-        llmResponse.toolRequest.requests.forEach(req => {
-            toolCalls.push({ tool: req.tool, args: req.input });
+    while (llmResponse.toolRequest) {
+      // Capture tool requests
+      llmResponse.toolRequest.requests.forEach(req => {
+        toolEvents.push({ tool: req.tool, args: req.input });
+      });
+
+      // Execute tools
+      const toolResponse = await llmResponse.toolRequest.next();
+
+      // Capture tool outputs
+      if (toolResponse.toolCalls) {
+        toolResponse.toolCalls.forEach((call, index) => {
+          if (toolEvents[index] && toolEvents[index].tool === call.tool) {
+            toolEvents[index].output = call.output;
+          }
         });
-        
-        // Execute tools and continue
-        llmResponse = await llmResponse.toolRequest.next();
-
-        // Capture any subsequent tool requests (though less common in this app's logic)
-        while(llmResponse.toolRequest) {
-            llmResponse.toolRequest.requests.forEach(req => {
-                toolCalls.push({ tool: req.tool, args: req.input });
-            });
-            llmResponse = await llmResponse.toolRequest.next();
-        }
+      }
+      
+      llmResponse = toolResponse;
     }
     
     // Check for createOrder tool call to extract order details
-    const createOrderCall = llmResponse.toolCalls?.find(tc => tc.tool === 'createOrder');
+    const createOrderEvent = toolEvents.find(tc => tc.tool === 'createOrder');
 
     return {
         response: llmResponse.text,
-        order: createOrderCall ? createOrderCall.output : undefined,
-        toolCalls,
+        order: createOrderEvent ? createOrderEvent.output : undefined,
+        toolCalls: toolEvents,
     };
   }
 );

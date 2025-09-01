@@ -11,12 +11,14 @@ export async function getGeminiResponse(payload: { history: Message[], message: 
     const { history, message, activeClientPhone } = payload;
     const limitedHistory = history.slice(-HISTORY_LIMIT);
     
-    const result = await generateInitialResponse({
+    const inputToAI = {
       history: limitedHistory.map(m => ({ role: m.role, content: m.content })),
       message,
       activeClientPhone: activeClientPhone,
-    });
-    return { success: true, ...result };
+    };
+    
+    const result = await generateInitialResponse(inputToAI);
+    return { success: true, ...result, rawInput: inputToAI };
   } catch (error) {
     console.error(error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

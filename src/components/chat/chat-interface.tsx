@@ -26,6 +26,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any[]>([]);
+  const [rawInputs, setRawInputs] = useState<any[]>([]);
   const [activeClient, setActiveClient] = useState<string | null>(null);
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [clientPhoneInput, setClientPhoneInput] = useState("");
@@ -69,6 +70,15 @@ export default function ChatInterface() {
         content: result.response,
       };
       setMessages(prev => [...prev, assistantMessage]);
+
+      if (result.rawInput) {
+        const rawInputPayload = {
+            timestamp: new Date().toISOString(),
+            message: `Raw input to AI`,
+            data: result.rawInput,
+        };
+        setRawInputs(prev => [...prev, rawInputPayload]);
+      }
 
       if (result.order) {
         const orderPayload = {
@@ -159,7 +169,7 @@ export default function ChatInterface() {
                 <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
             </TabsContent>
             <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
-                <DebugView messages={messages} errors={errors} />
+                <DebugView messages={messages} errors={errors} rawInputs={rawInputs} />
             </TabsContent>
         </div>
         <footer className="border-t bg-card/50 p-2 md:p-4">

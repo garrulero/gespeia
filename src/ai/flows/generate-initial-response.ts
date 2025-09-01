@@ -126,10 +126,12 @@ You can answer questions about products and create orders.
 
 Continue the conversation.
 
+{{#if history}}
 {{#each history}}
-{{#if this.role.user}}From user: {{this.content}}{{/if}}
-{{#if this.role.assistant}}Your response: {{this.content}}{{/if}}
+{{#if (eq this.role 'user')}}From user: {{this.content}}{{/if}}
+{{#if (eq this.role 'assistant')}}Your response: {{this.content}}{{/if}}
 {{/each}}
+{{/if}}
 
 New user message:
 {{message}}`,
@@ -142,16 +144,8 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async input => {
-    const transformedHistory = input.history.map(m => ({
-        content: m.content,
-        role: {
-            user: m.role === 'user',
-            assistant: m.role === 'assistant'
-        }
-    }));
-
     let llmResponse = await initialResponsePrompt({
-      history: transformedHistory,
+      history: input.history.length > 0 ? input.history : null, // Pass null if history is empty
       message: input.message,
       activeClientPhone: input.activeClientPhone,
     });

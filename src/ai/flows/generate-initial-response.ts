@@ -108,6 +108,9 @@ const initialResponsePrompt = ai.definePrompt({
 You must respond in Spanish.
 You can answer questions about products and create orders.
 
+**Client Information:**
+- If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), you MUST use the \`findOrCreateClientByPhone\` tool to get their name and respond.
+
 **Order Process:**
 1.  **Get Client ID**: Before creating an order, you MUST have a client ID. If an \`activeClientPhone\` is provided, you MUST use the \`findOrCreateClientByPhone\` tool to get the client's ID.
 2.  **No Active Client**: If the user asks to create an order but you don't have an \`activeClientPhone\`, you MUST tell the user they need to select a client first using the button in the header. DO NOT ask for their details in the chat.

@@ -4,10 +4,13 @@ import { generateInitialResponse } from '@/ai/flows/generate-initial-response';
 import { suggestAlternativeResponses } from '@/ai/flows/suggest-alternative-responses';
 import type { Message } from '@/lib/types';
 
+const HISTORY_LIMIT = 10;
+
 export async function getGeminiResponse(history: Message[], message: string) {
   try {
+    const limitedHistory = history.slice(-HISTORY_LIMIT);
     const result = await generateInitialResponse({
-      history: history.map(m => ({ role: m.role, content: m.content })),
+      history: limitedHistory.map(m => ({ role: m.role, content: m.content })),
       message,
     });
     return { success: true, response: result.response };

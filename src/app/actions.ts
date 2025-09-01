@@ -6,8 +6,9 @@ import type { Message } from '@/lib/types';
 
 const HISTORY_LIMIT = 10;
 
-export async function getGeminiResponse(history: Message[], message: string, activeClientPhone: string | null) {
+export async function getGeminiResponse(payload: { history: Message[], message: string, activeClientPhone: string | null }) {
   try {
+    const { history, message, activeClientPhone } = payload;
     const limitedHistory = history.slice(-HISTORY_LIMIT);
     
     const result = await generateInitialResponse({

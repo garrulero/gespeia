@@ -56,7 +56,11 @@ export default function ChatInterface() {
     setMessages(newMessages);
     setIsLoading(true);
 
-    const result = await getGeminiResponse(newMessages, text, activeClient);
+    const result = await getGeminiResponse({ 
+        history: newMessages, 
+        message: text, 
+        activeClientPhone: activeClient 
+    });
     
     if (result.success && result.response) {
       const assistantMessage: Message = {

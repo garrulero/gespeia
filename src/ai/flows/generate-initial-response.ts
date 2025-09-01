@@ -38,8 +38,8 @@ const initialResponsePrompt = ai.definePrompt({
   prompt: `You are a helpful chat assistant. Continue the conversation.
 
 {{#each history}}
-{{#if (eq role 'user')}}From user: {{content}}{{/if}}
-{{#if (eq role 'assistant')}}Your response: {{content}}{{/if}}
+{{#if (eq this.role "user")}}From user: {{this.content}}{{/if}}
+{{#if (eq this.role "assistant")}}Your response: {{this.content}}{{/if}}
 {{/each}}
 
 New user message:

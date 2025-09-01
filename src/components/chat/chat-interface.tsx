@@ -8,7 +8,7 @@ import { MessageInput } from './message-input';
 import { GeminiLogo } from '../icons/gemini-logo';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DebugView } from './debug-view';
+import { DebugView, Event } from './debug-view';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -25,13 +25,21 @@ import { User } from 'lucide-react';
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<any[]>([]);
-  const [rawInputs, setRawInputs] = useState<any[]>([]);
+  const [debugEvents, setDebugEvents] = useState<Event[]>([]);
   const [activeClient, setActiveClient] = useState<string | null>(null);
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [clientPhoneInput, setClientPhoneInput] = useState("");
 
   const { toast } = useToast();
+
+  const addDebugEvent = (message: string, data?: any, type: Event['type'] = 'info') => {
+    setDebugEvents(prev => [...prev, {
+      timestamp: new Date().toISOString(),
+      type,
+      message,
+      data,
+    }]);
+  };
 
   const handleSetClient = () => {
     if (clientPhoneInput) {
@@ -63,44 +71,36 @@ export default function ChatInterface() {
         activeClientPhone: activeClient 
     });
     
-    if (result.success && result.response) {
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: result.response,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+    if (result.success) {
+        if (result.response) {
+            const assistantMessage: Message = {
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content: result.response,
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+        }
 
-      if (result.rawInput) {
-        const rawInputPayload = {
-            timestamp: new Date().toISOString(),
-            message: `Raw input to AI`,
-            data: result.rawInput,
-        };
-        setRawInputs(prev => [...prev, rawInputPayload]);
-      }
-
-      if (result.order) {
-        const orderPayload = {
-            timestamp: new Date().toISOString(),
-            message: `Order ${result.order.orderId} created successfully.`,
-            context: 'createOrder',
-            data: result.order,
-        };
-        setErrors(prev => [...prev, orderPayload]);
-      }
+        if (result.rawInput) {
+            addDebugEvent('Raw input to AI', result.rawInput, 'input');
+        }
+        
+        if (result.toolCalls && result.toolCalls.length > 0) {
+            result.toolCalls.forEach(tc => {
+                addDebugEvent(`Tool Call: ${tc.tool}`, tc.args, 'tool');
+            });
+        }
+        
+        if (result.order) {
+            addDebugEvent(`Order ${result.order.orderId} created`, result.order, 'tool');
+        }
     } else {
-      const errorPayload = {
-        timestamp: new Date().toISOString(),
-        message: result.error || "Sorry, I couldn't get a response. Please try again.",
-        context: 'getGeminiResponse'
-      };
-      setErrors(prev => [...prev, errorPayload]);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorPayload.message,
-      });
+        addDebugEvent(result.error || "Sorry, I couldn't get a response. Please try again.", undefined, 'error');
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: result.error || "An unknown error occurred.",
+        });
       // remove the user message if the call fails
       setMessages(messages);
     }
@@ -169,7 +169,7 @@ export default function ChatInterface() {
                 <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
             </TabsContent>
             <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
-                <DebugView messages={messages} errors={errors} rawInputs={rawInputs} />
+                <DebugView messages={messages} events={debugEvents} />
             </TabsContent>
         </div>
         <footer className="border-t bg-card/50 p-2 md:p-4">

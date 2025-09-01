@@ -111,6 +111,10 @@ const GenerateInitialResponseOutputSchema = z.object({
     orderId: z.string(),
     total: z.number(),
   }).optional(),
+  toolCalls: z.array(z.object({
+    tool: z.string(),
+    args: z.any(),
+  })).optional(),
 });
 export type GenerateInitialResponseOutput = z.infer<typeof GenerateInitialResponseOutputSchema>;
 
@@ -167,27 +171,23 @@ const generateInitialResponseFlow = ai.defineFlow(
   },
   async (input) => {
     let llmResponse = await initialResponsePrompt(input);
-    
+    const toolCalls: { tool: string; args: any }[] = [];
+
     while (llmResponse.toolRequest) {
+      // Log the tool request
+      llmResponse.toolRequest.requests.forEach(req => {
+        toolCalls.push({ tool: req.tool, args: req.input });
+      });
       llmResponse = await llmResponse.toolRequest.next();
     }
     
-    const toolCalls = llmResponse.toolCalls;
-    if (toolCalls && toolCalls.length > 0) {
-        const createOrderCall = toolCalls.find(tc => tc.tool === 'createOrder');
-        if (createOrderCall) {
-          const order = createOrderCall.output;
-          return {
-            response: llmResponse.text,
-            order: order,
-          };
-        }
-    }
-    
+    // Check for createOrder tool call to extract order details
+    const createOrderCall = llmResponse.toolCalls?.find(tc => tc.tool === 'createOrder');
+
     return {
         response: llmResponse.text,
+        order: createOrderCall ? createOrderCall.output : undefined,
+        toolCalls,
     };
   }
 );
-
-    

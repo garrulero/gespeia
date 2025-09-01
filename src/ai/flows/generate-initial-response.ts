@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { getBeverageStock } from '@/services/beverage-service';
+import { getBeverageStock, findProduct } from '@/services/beverage-service';
 import { addOrder } from '@/services/order-service';
 import { findClientByPhone, addClient, Client } from '@/services/client-service';
 
@@ -133,7 +133,7 @@ You can answer questions about products and create orders for clients.
 **Client Information & Order Process:**
 Your primary goal is to create orders for clients. To do this, you need a client ID.
 
-1.  **Check for Active Client**: When a user wants to place an order or asks who they are, you MUST first check if you have an \`activeClientPhone\`. If \`activeClientPhone\` is null or empty, you MUST tell the user they need to select a client using the button in the header. Do NOT proceed.
+1.  **Check for Active Client**: When a user wants to place an order or asks who they are, you MUST first check if you have an \`activeClientPhone\`.
 
 2.  **Find Existing Client**: If you have an \`activeClientPhone\`, you MUST use the \`findClientByPhoneTool\` to check if the client exists.
 
@@ -173,12 +173,21 @@ const generateInitialResponseFlow = ai.defineFlow(
     let llmResponse = await initialResponsePrompt(input);
     const toolCalls: { tool: string; args: any }[] = [];
 
-    while (llmResponse.toolRequest) {
-      // Log the tool request
-      llmResponse.toolRequest.requests.forEach(req => {
-        toolCalls.push({ tool: req.tool, args: req.input });
-      });
-      llmResponse = await llmResponse.toolRequest.next();
+    if (llmResponse.toolRequest) {
+        llmResponse.toolRequest.requests.forEach(req => {
+            toolCalls.push({ tool: req.tool, args: req.input });
+        });
+        
+        // Execute tools and continue
+        llmResponse = await llmResponse.toolRequest.next();
+
+        // Capture any subsequent tool requests (though less common in this app's logic)
+        while(llmResponse.toolRequest) {
+            llmResponse.toolRequest.requests.forEach(req => {
+                toolCalls.push({ tool: req.tool, args: req.input });
+            });
+            llmResponse = await llmResponse.toolRequest.next();
+        }
     }
     
     // Check for createOrder tool call to extract order details

@@ -137,7 +137,7 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async (input) => {
-    // THIS IS THE FIX: Handle initial greeting OUTSIDE of the main prompt logic.
+    // Handle initial greeting OUTSIDE of the main prompt logic.
     if (input.history.length === 0 && input.activeClientPhone) {
         const client = await findOrCreateClientByPhone(input.activeClientPhone);
         const greetingPrompt = ai.definePrompt({

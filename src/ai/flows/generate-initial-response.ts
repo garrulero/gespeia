@@ -15,7 +15,7 @@ import { getBeverageStock } from '@/services/beverage-service';
 const getBeverageStockTool = ai.defineTool(
     {
         name: 'getBeverageStock',
-        description: 'Get the stock of all beverages available.',
+        description: 'Get the stock and price of all beverages available.',
         inputSchema: z.object({}),
         outputSchema: z.array(z.object({
             name: z.string(),

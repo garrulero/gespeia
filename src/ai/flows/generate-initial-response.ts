@@ -82,14 +82,28 @@ const createClientTool = ai.defineTool({
         phone: z.string().describe('The phone number of the client.'),
         address: z.string().describe('The full address of the client.'),
     }),
-    outputSchema: z.object({
-        id: z.string(),
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
-    }),
+    outputSchema: z.union([
+      z.object({
+          id: z.string(),
+          name: z.string(),
+          phone: z.string(),
+          address: z.string(),
+      }),
+      z.object({
+          error: z.string(),
+          details: z.any().optional(),
+      })
+    ]),
 }, async (clientData) => {
-    return addClient(clientData);
+    try {
+      const newClient = await addClient(clientData);
+      return newClient;
+    } catch (error: any) {
+      return {
+        error: "Failed to create client",
+        details: error.message,
+      }
+    }
 });
 
 
@@ -172,22 +186,20 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async (input) => {
-    let llmResponse = await initialResponsePrompt(input);
     const toolEvents: { tool: string; args: any; output?: any }[] = [];
+    let llmResponse = await initialResponsePrompt(input);
 
     while (llmResponse.toolRequest) {
-      // Capture tool requests
-      const toolRequests = llmResponse.toolRequest.requests.map(req => {
-        return { tool: req.tool, args: req.input };
+      
+      llmResponse.toolRequest.requests.forEach(req => {
+        toolEvents.push({ tool: req.tool, args: req.input });
       });
-      toolEvents.push(...toolRequests);
-    
-      // Execute tools
+
       const toolResponse = await llmResponse.toolRequest.next();
-    
-      // Capture tool outputs
+
       if (toolResponse.toolCalls) {
         toolResponse.toolCalls.forEach((call) => {
+          // Find the corresponding tool request and add the output
           const matchingEvent = toolEvents.find(
             (event) => event.tool === call.tool && !event.output
           );
@@ -211,3 +223,4 @@ const generateInitialResponseFlow = ai.defineFlow(
     };
   }
 );
+

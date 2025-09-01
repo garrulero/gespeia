@@ -10,14 +10,10 @@ export async function getGeminiResponse(history: Message[], message: string, act
   try {
     const limitedHistory = history.slice(-HISTORY_LIMIT);
     
-    // Determine if this is the first message of the conversation.
-    const isFirstMessage = limitedHistory.length === 0;
-
     const result = await generateInitialResponse({
       history: limitedHistory.map(m => ({ role: m.role, content: m.content })),
       message,
-      // Only pass the activeClientPhone on the very first message.
-      activeClientPhone: isFirstMessage ? activeClientPhone : null,
+      activeClientPhone: activeClientPhone,
     });
     return { success: true, ...result };
   } catch (error) {

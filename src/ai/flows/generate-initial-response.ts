@@ -36,7 +36,7 @@ const createOrderTool = ai.defineTool(
         description: 'Create a new order for one or more beverages. This also adjusts the stock.',
         inputSchema: z.object({
             items: z.array(z.object({
-                productName: z.string().describe("The name of the product to order."),
+                productName: z.string().describe("The name of the product to order. This MUST be the `name` field from the product, not the brand."),
                 quantity: z.number().int().positive().describe("The quantity of the product to order."),
             })).describe("A list of items to include in the order.")
         }),

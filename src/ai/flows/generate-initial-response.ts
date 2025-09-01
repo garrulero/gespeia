@@ -108,15 +108,16 @@ const initialResponsePrompt = ai.definePrompt({
 You must respond in Spanish.
 You can answer questions about products and create orders.
 
+**Initial Greeting:**
+- If the \`history\` array is empty and an \`activeClientPhone\` is provided, it means this is the first message. You MUST use the \`findOrCreateClientByPhone\` tool to get the client's name and include it in your greeting.
+
 **Client Information:**
-- If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), you MUST use the \`findOrCreateClientByPhone\` tool to get their name and respond.
+- If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), you MUST use the \`findOrCreateClientByPhone\` tool with the \`activeClientPhone\` to get their name and respond.
 
 **Order Process:**
-1.  **Get Client ID**: Before creating an order, you MUST have a client ID. If an \`activeClientPhone\` is provided, you MUST use the \`findOrCreateClientByPhone\` tool to get the client's ID.
-2.  **No Active Client**: If the user asks to create an order but you don't have an \`activeClientPhone\`, you MUST tell the user they need to select a client first using the button in the header. DO NOT ask for their details in the chat.
-3.  **Create Order**: Once you have the client ID, use the \`createOrder\` tool to place the order. You must provide the \`clientId\`.
-4.  **Stock Issues**: If there is not enough stock for an item, inform the user of the available quantity and ask if they want to proceed with that amount.
-5.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
+1.  **Get Client ID**: Before creating an order, you MUST have a client ID. An \`activeClientPhone\` is always provided. You MUST use the \`findOrCreateClientByPhone\` tool with that phone number to get the client's ID.
+2.  **No Active Client**: If the user asks to create an order but you don't have an \`activeClientPhone\`, you MUST tell the user they need to select a client first using the button in the header.
+3.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
 
 **General Rules:**
 - If you need information about beverages, use the \`getBeverageStock\` tool.
@@ -137,7 +138,7 @@ const generateInitialResponseFlow = ai.defineFlow(
     inputSchema: GenerateInitialResponseInputSchema,
     outputSchema: GenerateInitialResponseOutputSchema,
   },
-  async input => {
+  async (input) => {
     let llmResponse = await initialResponsePrompt(input);
     
     while (llmResponse.toolRequest) {

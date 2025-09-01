@@ -3,10 +3,14 @@
 import { generateInitialResponse } from '@/ai/flows/generate-initial-response';
 import { suggestAlternativeResponses } from '@/ai/flows/suggest-alternative-responses';
 import { toast } from '@/hooks/use-toast';
+import type { Message } from '@/lib/types';
 
-export async function getGeminiResponse(message: string) {
+export async function getGeminiResponse(history: Message[], message: string) {
   try {
-    const result = await generateInitialResponse({ message });
+    const result = await generateInitialResponse({
+      history: history.map(m => ({ role: m.role, content: m.content })),
+      message,
+    });
     return { success: true, response: result.response };
   } catch (error) {
     console.error(error);

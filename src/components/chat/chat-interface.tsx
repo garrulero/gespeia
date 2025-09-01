@@ -21,10 +21,12 @@ export default function ChatInterface() {
       role: 'user',
       content: text,
     };
-    setMessages(prev => [...prev, userMessage]);
+    
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setIsLoading(true);
 
-    const result = await getGeminiResponse(text);
+    const result = await getGeminiResponse(messages, text);
     
     if (result.success && result.response) {
       const assistantMessage: Message = {
@@ -39,6 +41,8 @@ export default function ChatInterface() {
         title: "Error",
         description: result.error || "Sorry, I couldn't get a response. Please try again.",
       });
+      // remove the user message if the call fails
+      setMessages(messages);
     }
 
     setIsLoading(false);

@@ -11,7 +11,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+const MessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+});
+
 const GenerateInitialResponseInputSchema = z.object({
+  history: z.array(MessageSchema).describe("The history of the conversation so far."),
   message: z.string().describe('The user message to respond to.'),
 });
 export type GenerateInitialResponseInput = z.infer<typeof GenerateInitialResponseInputSchema>;
@@ -29,8 +35,14 @@ const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: GenerateInitialResponseInputSchema},
   output: {schema: GenerateInitialResponseOutputSchema},
-  prompt: `You are a helpful chat assistant. Respond to the following user message:
+  prompt: `You are a helpful chat assistant. Continue the conversation.
 
+{{#each history}}
+{{#if (eq role 'user')}}From user: {{content}}{{/if}}
+{{#if (eq role 'assistant')}}Your response: {{content}}{{/if}}
+{{/each}}
+
+New user message:
 {{message}}`,
 });
 

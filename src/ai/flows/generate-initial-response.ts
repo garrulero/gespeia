@@ -122,19 +122,19 @@ const generateInitialResponseFlow = ai.defineFlow(
         message: input.message
     });
 
-    const toolCalls = llmResponse.toolCalls();
+    const toolCalls = llmResponse.toolCalls;
     const createOrderCall = toolCalls.find(tc => tc.tool === 'createOrder');
 
     if (createOrderCall) {
       const order = await createOrderCall.output();
       return {
-        response: llmResponse.text(),
+        response: llmResponse.text,
         order: order,
       };
     }
 
     return {
-        response: llmResponse.text(),
+        response: llmResponse.text,
     };
   }
 );

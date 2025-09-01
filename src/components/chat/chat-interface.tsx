@@ -71,13 +71,13 @@ export default function ChatInterface() {
         <GeminiLogo className="h-8 w-8" />
         <h1 className="text-xl font-bold">ChatGemini</h1>
       </header>
-      <Tabs defaultValue="chat" className="flex-1 overflow-hidden">
+      <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
         <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="debug">Debug</TabsTrigger>
         </TabsList>
         <TabsContent value="chat" className="h-full flex flex-col">
-            <main className="flex-1 overflow-hidden">
+            <main className="flex-1 overflow-auto">
                 <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
             </main>
             <footer className="border-t bg-card/50 p-2 md:p-4">

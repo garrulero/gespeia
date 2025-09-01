@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/types";
 import { ChatAvatar } from "./chat-avatar";
 import { Button } from "../ui/button";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useState } from "react";
 import { getAlternativeResponses } from "@/app/actions";
@@ -60,7 +60,7 @@ export function ChatMessage({ message, isLoading = false, onUpdateMessage }: Cha
       <div className={cn("max-w-[75%] space-y-1", { "order-first": isUser })}>
         <div className={cn(
             "group relative rounded-lg px-3 py-2 shadow-sm",
-            isUser ? "bg-user-message dark:bg-user-message-dark" : "bg-card",
+            isUser ? "bg-primary text-primary-foreground" : "bg-card",
             isLoading && "p-0"
           )}
         >
@@ -110,7 +110,6 @@ export function ChatMessage({ message, isLoading = false, onUpdateMessage }: Cha
                           className="h-auto justify-start text-left whitespace-normal"
                           onClick={() => handleSelectAlternative(alt)}
                         >
-                          <Check className="mr-2 h-4 w-4 flex-shrink-0" />
                           {alt}
                         </Button>
                       ))

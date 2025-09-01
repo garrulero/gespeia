@@ -52,7 +52,7 @@ export function ChatMessage({ message, isLoading = false, onUpdateMessage }: Cha
   return (
     <div
       className={cn(
-        "flex items-start gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
+        "flex items-start gap-3",
         isUser ? "justify-end" : "justify-start"
       )}
     >
@@ -66,9 +66,9 @@ export function ChatMessage({ message, isLoading = false, onUpdateMessage }: Cha
         >
           {isLoading ? (
              <div className="flex items-center space-x-2 p-2">
-                <Skeleton className="h-2 w-2 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <Skeleton className="h-2 w-2 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <Skeleton className="h-2 w-2 rounded-full animate-bounce" />
+                <div className="h-2 w-2 rounded-full bg-muted animate-bounce [animation-delay:-0.3s]" />
+                <div className="h-2 w-2 rounded-full bg-muted animate-bounce [animation-delay:-0.15s]" />
+                <div className="h-2 w-2 rounded-full bg-muted animate-bounce" />
             </div>
           ) : (
             <p className="text-sm text-foreground whitespace-pre-wrap">{message.content}</p>

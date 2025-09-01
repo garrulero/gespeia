@@ -7,10 +7,13 @@ import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
 import { GeminiLogo } from '../icons/gemini-logo';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DebugView } from './debug-view';
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<any[]>([]);
   const { toast } = useToast();
 
   const handleSendMessage = async (text: string) => {
@@ -26,7 +29,7 @@ export default function ChatInterface() {
     setMessages(newMessages);
     setIsLoading(true);
 
-    const result = await getGeminiResponse(messages, text);
+    const result = await getGeminiResponse(newMessages.slice(0, -1), text);
     
     if (result.success && result.response) {
       const assistantMessage: Message = {
@@ -36,10 +39,16 @@ export default function ChatInterface() {
       };
       setMessages(prev => [...prev, assistantMessage]);
     } else {
+      const errorPayload = {
+        timestamp: new Date().toISOString(),
+        message: result.error || "Sorry, I couldn't get a response. Please try again.",
+        context: 'getGeminiResponse'
+      };
+      setErrors(prev => [...prev, errorPayload]);
       toast({
         variant: "destructive",
         title: "Error",
-        description: result.error || "Sorry, I couldn't get a response. Please try again.",
+        description: errorPayload.message,
       });
       // remove the user message if the call fails
       setMessages(messages);
@@ -62,12 +71,23 @@ export default function ChatInterface() {
         <GeminiLogo className="h-8 w-8" />
         <h1 className="text-xl font-bold">ChatGemini</h1>
       </header>
-      <main className="flex-1 overflow-hidden">
-        <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
-      </main>
-      <footer className="border-t bg-card/50 p-2 md:p-4">
-        <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-      </footer>
+      <Tabs defaultValue="chat" className="flex-1 overflow-hidden">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="debug">Debug</TabsTrigger>
+        </TabsList>
+        <TabsContent value="chat" className="h-full flex flex-col">
+            <main className="flex-1 overflow-hidden">
+                <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
+            </main>
+            <footer className="border-t bg-card/50 p-2 md:p-4">
+                <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+            </footer>
+        </TabsContent>
+        <TabsContent value="debug" className="h-full overflow-y-auto">
+            <DebugView messages={messages} errors={errors} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -29,7 +29,7 @@ export default function ChatInterface() {
     setMessages(newMessages);
     setIsLoading(true);
 
-    const result = await getGeminiResponse(newMessages.slice(0, -1), text);
+    const result = await getGeminiResponse(newMessages, text);
     
     if (result.success && result.response) {
       const assistantMessage: Message = {
@@ -89,14 +89,14 @@ export default function ChatInterface() {
         <div className="flex flex-1 flex-col overflow-hidden">
             <TabsContent value="chat" className="flex-1 overflow-auto m-0 flex flex-col">
                 <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
-                 <footer className="border-t bg-card/50 p-2 md:p-4">
-                    <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-                </footer>
             </TabsContent>
             <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
                 <DebugView messages={messages} errors={errors} />
             </TabsContent>
         </div>
+        <footer className="border-t bg-card/50 p-2 md:p-4">
+            <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+        </footer>
       </Tabs>
     </div>
   );

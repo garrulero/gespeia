@@ -109,7 +109,6 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async input => {
-    // Transform the history to a format that Handlebars can use without an 'eq' helper.
     const transformedHistory = input.history.map(m => ({
         content: m.content,
         role: {
@@ -123,16 +122,17 @@ const generateInitialResponseFlow = ai.defineFlow(
     });
 
     const toolCalls = llmResponse.toolCalls;
-    const createOrderCall = toolCalls.find(tc => tc.tool === 'createOrder');
-
-    if (createOrderCall) {
-      const order = await createOrderCall.output();
-      return {
-        response: llmResponse.text,
-        order: order,
-      };
+    if (toolCalls && toolCalls.length > 0) {
+        const createOrderCall = toolCalls.find(tc => tc.tool === 'createOrder');
+        if (createOrderCall) {
+          const order = await createOrderCall.output();
+          return {
+            response: llmResponse.text,
+            order: order,
+          };
+        }
     }
-
+    
     return {
         response: llmResponse.text,
     };

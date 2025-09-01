@@ -15,6 +15,10 @@ export default {
         code: ['monospace'],
       },
       colors: {
+        'user-message': {
+          DEFAULT: '#dcf8c6',
+          dark: '#056162',
+        },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

@@ -1,6 +1,7 @@
 "use server";
 
 import { findProduct, updateStock, Product } from './beverage-service';
+import { findClientById } from './client-service';
 
 export type OrderItem = {
     productName: string;
@@ -9,6 +10,8 @@ export type OrderItem = {
 
 export type Order = {
     id: string;
+    clientId: string;
+    clientName: string;
     items: (OrderItem & { price: number })[];
     total: number;
     status: 'pending' | 'completed' | 'cancelled';
@@ -22,9 +25,14 @@ export async function getOrders(): Promise<Order[]> {
     return Promise.resolve(orders);
 }
 
-export async function addOrder(items: OrderItem[]): Promise<Order> {
+export async function addOrder(items: OrderItem[], clientId: string): Promise<Order> {
     let total = 0;
     const processedItems = [];
+
+    const client = await findClientById(clientId);
+    if (!client) {
+        throw new Error(`El cliente con ID "${clientId}" no se ha encontrado.`);
+    }
 
     // Use a transaction-like approach: validate all items before making changes.
     for (const item of items) {
@@ -47,6 +55,8 @@ export async function addOrder(items: OrderItem[]): Promise<Order> {
     
     const newOrder: Order = {
         id: crypto.randomUUID(),
+        clientId: client.id,
+        clientName: client.name,
         items: processedItems,
         total,
         status: 'completed',

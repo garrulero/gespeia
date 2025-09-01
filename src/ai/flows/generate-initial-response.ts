@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getBeverageStock } from '@/services/beverage-service';
 import { addOrder } from '@/services/order-service';
+import { getClients, findClientByName, addClient } from '@/services/client-service';
 
 const getBeverageStockTool = ai.defineTool(
     {
@@ -33,8 +34,9 @@ const getBeverageStockTool = ai.defineTool(
 const createOrderTool = ai.defineTool(
     {
         name: 'createOrder',
-        description: 'Create a new order for one or more beverages. This also adjusts the stock.',
+        description: 'Create a new order for one or more beverages for a given client. This also adjusts the stock.',
         inputSchema: z.object({
+            clientId: z.string().describe("The ID of the client placing the order."),
             items: z.array(z.object({
                 productName: z.string().describe("The name of the product to order. This MUST be the `name` field from the product, not the brand."),
                 quantity: z.number().int().positive().describe("The quantity of the product to order."),
@@ -45,13 +47,70 @@ const createOrderTool = ai.defineTool(
             total: z.number().describe("The total price of the order."),
         }),
     },
-    async ({items}) => {
-        const order = await addOrder(items);
+    async ({items, clientId}) => {
+        const order = await addOrder(items, clientId);
         return {
             orderId: order.id,
             total: order.total,
         }
     }
+);
+
+const listClientsTool = ai.defineTool(
+  {
+    name: 'listClients',
+    description: 'Get a list of all registered clients.',
+    inputSchema: z.object({}),
+    outputSchema: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        phone: z.string(),
+        address: z.string(),
+      })
+    ),
+  },
+  async () => {
+    return getClients();
+  }
+);
+
+const findClientByNameTool = ai.defineTool(
+  {
+    name: 'findClientByName',
+    description: 'Find a client by their name.',
+    inputSchema: z.object({ name: z.string().describe('The name of the client to search for.') }),
+    outputSchema: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        phone: z.string(),
+        address: z.string(),
+      })
+      .optional(),
+  },
+  async ({ name }) => {
+    return findClientByName(name);
+  }
+);
+
+const createClientTool = ai.defineTool(
+  {
+    name: 'createClient',
+    description: 'Create a new client.',
+    inputSchema: z.object({
+      name: z.string().describe('The full name of the client.'),
+      phone: z.string().describe('The phone number of the client.'),
+      address: z.string().describe('The shipping address for the client.'),
+    }),
+    outputSchema: z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  },
+  async (input) => {
+    return addClient(input);
+  }
 );
 
 
@@ -82,14 +141,24 @@ export async function generateInitialResponse(input: GenerateInitialResponseInpu
 const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: z.any()},
-  tools: [getBeverageStockTool, createOrderTool],
+  tools: [getBeverageStockTool, createOrderTool, listClientsTool, findClientByNameTool, createClientTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
 You must respond in Spanish.
-You can answer questions about the products and create orders for the user.
-If you need information about the beverages, use the getBeverageStock tool.
-If the user wants to place an order, use the createOrder tool.
-If there is not enough stock, inform the user of the available quantity and ask if they want to proceed with that amount. If they confirm, you MUST use the createOrder tool with the adjusted quantity.
-When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the orderId and total from the createOrder tool output.
+You can answer questions about products and create orders.
+
+**Order Process:**
+1.  **Identify Client**: Before creating an order, you MUST know who the client is.
+    - Ask the user for their client name (e.g., "¿A nombre de qué cliente se hará el pedido?").
+    - Use the \`findClientByName\` tool to check if they exist.
+2.  **Client Not Found**: If the client is not found, you MUST ask for their full name, phone number, and address to register them.
+    - Then, use the \`createClient\` tool to create the new client.
+    - After creating the client, confirm with the user and proceed with their original order request using the new client's ID.
+3.  **Create Order**: Once the client is identified (either found or newly created), use the \`createOrder\` tool to place the order. You must provide the \`clientId\`.
+4.  **Stock Issues**: If there is not enough stock for an item, inform the user of the available quantity and ask if they want to proceed with that amount. If they confirm, you MUST use the \`createOrder\` tool with the adjusted quantity.
+5.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
+
+**General Rules:**
+- If you need information about beverages, use the \`getBeverageStock\` tool.
 
 Continue the conversation.
 

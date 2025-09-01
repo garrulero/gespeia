@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getBeverageStock, Product } from '@/services/beverage-service';
+import { getClients, Client } from '@/services/client-service';
 import { addOrder, getOrders, Order, OrderItem } from '@/services/order-service';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
@@ -49,31 +50,36 @@ const orderItemSchema = z.object({
 });
 
 const orderSchema = z.object({
+  clientId: z.string().min(1, "Client is required"),
   items: z.array(orderItemSchema).min(1, "Order must have at least one item"),
 });
 
 export default function OrderManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const fetchOrdersAndProducts = async () => {
-    const [fetchedOrders, fetchedProducts] = await Promise.all([
+  const fetchAllData = async () => {
+    const [fetchedOrders, fetchedProducts, fetchedClients] = await Promise.all([
       getOrders(),
       getBeverageStock(),
+      getClients(),
     ]);
     setOrders(fetchedOrders);
     setProducts(fetchedProducts);
+    setClients(fetchedClients);
   };
 
   useEffect(() => {
-    fetchOrdersAndProducts();
+    fetchAllData();
   }, []);
 
   const form = useForm<z.infer<typeof orderSchema>>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
+      clientId: '',
       items: [{ productName: '', quantity: 1 }],
     },
   });
@@ -85,8 +91,8 @@ export default function OrderManager() {
 
   const onSubmit = async (values: z.infer<typeof orderSchema>) => {
     try {
-      await addOrder(values.items);
-      await fetchOrdersAndProducts();
+      await addOrder(values.items, values.clientId);
+      await fetchAllData();
       form.reset();
       setIsDialogOpen(false);
     } catch (error) {
@@ -115,6 +121,31 @@ export default function OrderManager() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cliente</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un cliente" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clients.map(c => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex items-end gap-2">
                     <FormField
@@ -180,6 +211,7 @@ export default function OrderManager() {
             <TableHeader>
                 <TableRow>
                     <TableHead>ID Pedido</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead>Artículos</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                     <TableHead>Estado</TableHead>
@@ -189,6 +221,7 @@ export default function OrderManager() {
                 {orders.map(order => (
                     <TableRow key={order.id}>
                         <TableCell className="font-mono text-xs">{order.id}</TableCell>
+                        <TableCell>{order.clientName}</TableCell>
                         <TableCell>
                             {order.items.map(item => (
                                 <div key={item.productName}>{item.quantity} x {item.productName}</div>

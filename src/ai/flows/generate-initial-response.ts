@@ -56,6 +56,7 @@ const initialResponsePrompt = ai.definePrompt({
   output: {schema: GenerateInitialResponseOutputSchema},
   tools: [getBeverageStockTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
+You must respond in Spanish.
 You can answer questions about the products.
 If you need information about the beverages, use the getBeverageStock tool.
 

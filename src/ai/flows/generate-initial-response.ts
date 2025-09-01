@@ -109,7 +109,7 @@ You must respond in Spanish.
 You can answer questions about products and create orders.
 
 **Initial Greeting:**
-- If this is the first message of the conversation (history is empty) AND there is an \`activeClientPhone\`, you MUST use the \`findOrCreateClientByPhone\` tool to look up the client's name.
+- If this is the first message of the conversation (the history array is empty) AND there is an \`activeClientPhone\`, you MUST use the \`findOrCreateClientByPhone\` tool to look up the client's name.
 - Then, respond with a greeting that confirms the client you've identified. For example: "¡Hola! Veo que estás usando el número de [nombre del cliente]. ¿En qué puedo ayudarte hoy?"
 - If no client is found or there is no active phone, just give a generic greeting.
 
@@ -126,11 +126,9 @@ You can answer questions about products and create orders.
 
 Continue the conversation.
 
-{{#if history}}
 {{#each history}}
 {{this.role}}: {{this.content}}
 {{/each}}
-{{/if}}
 
 New user message:
 {{message}}`,
@@ -143,8 +141,9 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async input => {
+    // When the history array is empty, the LLM will follow the "Initial Greeting" instructions.
     let llmResponse = await initialResponsePrompt({
-        history: input.history.length > 0 ? input.history : null,
+        history: input.history,
         message: input.message,
         activeClientPhone: input.activeClientPhone,
     });

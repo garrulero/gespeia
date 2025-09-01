@@ -108,9 +108,6 @@ const initialResponsePrompt = ai.definePrompt({
 You must respond in Spanish.
 You can answer questions about products and create orders.
 
-**Initial Greeting:**
-- If the \`history\` array is empty and an \`activeClientPhone\` is provided, it means this is the first message. You MUST use the \`findOrCreateClientByPhone\` tool to get the client's name and include it in your greeting.
-
 **Client Information:**
 - If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), you MUST use the \`findOrCreateClientByPhone\` tool with the \`activeClientPhone\` to get their name and respond with the name provided by the tool.
 
@@ -139,6 +136,22 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async (input) => {
+    // THIS IS THE FIX: Handle initial greeting OUTSIDE of the main prompt logic.
+    if (input.history.length === 0 && input.activeClientPhone) {
+        const client = await findOrCreateClientByPhone(input.activeClientPhone);
+        const greetingPrompt = ai.definePrompt({
+            name: 'greetingPrompt',
+            prompt: `You are a helpful chat assistant for a beverage distribution company. You must respond in Spanish.
+            A user has just started a conversation. Greet them by name and ask how you can help.
+            Client Name: "${client.name}"
+            User Message: "${input.message}"
+            `,
+        });
+        const llmResponse = await greetingPrompt();
+        return { response: llmResponse.text };
+    }
+
+
     let llmResponse = await initialResponsePrompt(input);
     
     while (llmResponse.toolRequest) {

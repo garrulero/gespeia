@@ -35,7 +35,7 @@ export async function addBeverage(product: Product): Promise<Product[]> {
 }
 
 export async function updateStock(productName: string, quantityChange: number): Promise<void> {
-    const product = products.find(p => p.name === productName);
+    const product = await findProduct(productName);
     if (!product) {
         throw new Error(`Product "${productName}" not found.`);
     }
@@ -47,5 +47,5 @@ export async function updateStock(productName: string, quantityChange: number): 
 }
 
 export async function findProduct(productName: string): Promise<Product | undefined> {
-    return Promise.resolve(products.find(p => p.name === productName));
+    return Promise.resolve(products.find(p => p.name.toLowerCase() === productName.toLowerCase()));
 }

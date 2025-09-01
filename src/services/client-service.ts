@@ -26,9 +26,9 @@ export async function findClientByName(name: string): Promise<Client | undefined
     return Promise.resolve(clients.find(c => c.name.toLowerCase() === name.toLowerCase()));
 }
 
-export async function findClientByPhone(phone: string): Promise<Client | undefined> {
-    // FIX: Trim both the stored phone and the search phone to avoid whitespace issues.
-    return Promise.resolve(clients.find(c => c.phone.trim() === phone.trim()));
+export async function findClientByPhone(phone: string): Promise<Client | null> {
+    const client = clients.find(c => c.phone.trim() === phone.trim());
+    return Promise.resolve(client || null);
 }
 
 export async function addClient(clientData: Omit<Client, 'id'>): Promise<Client> {
@@ -46,16 +46,4 @@ export async function addClient(clientData: Omit<Client, 'id'>): Promise<Client>
     return Promise.resolve(newClient);
 }
 
-export async function findOrCreateClientByPhone(phone: string): Promise<Client> {
-    let client = await findClientByPhone(phone);
-    if (client) {
-        return client;
-    }
-
-    const newClient = await addClient({
-        name: `Cliente ${phone}`,
-        phone: phone,
-        address: 'N/A'
-    });
-    return newClient;
-}
+    

@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { getBeverageStock } from '@/services/beverage-service';
 import { addOrder } from '@/services/order-service';
-import { findOrCreateClientByPhone } from '@/services/client-service';
+import { findClientByPhone, addClient, Client } from '@/services/client-service';
 
 
 const getBeverageStockTool = ai.defineTool(
@@ -57,22 +57,40 @@ const createOrderTool = ai.defineTool(
     }
 );
 
-const findOrCreateClientByPhoneTool = ai.defineTool(
+const findClientByPhoneTool = ai.defineTool(
   {
-    name: 'findOrCreateClientByPhone',
-    description: "Finds a client by their phone number. If the client doesn't exist, it creates a new one.",
+    name: 'findClientByPhone',
+    description: "Finds a client by their phone number. Returns the client object or null if not found.",
     inputSchema: z.object({ phone: z.string().describe('The phone number of the client.') }),
     outputSchema: z.object({
         id: z.string(),
         name: z.string(),
         phone: z.string(),
         address: z.string(),
-      }),
+    }).nullable(),
   },
   async ({ phone }) => {
-    return findOrCreateClientByPhone(phone);
+    return findClientByPhone(phone);
   }
 );
+
+const createClientTool = ai.defineTool({
+    name: 'createClient',
+    description: 'Creates a new client. Use this after you have asked the user for their name and address.',
+    inputSchema: z.object({
+        name: z.string().describe('The full name of the client.'),
+        phone: z.string().describe('The phone number of the client.'),
+        address: z.string().describe('The full address of the client.'),
+    }),
+    outputSchema: z.object({
+        id: z.string(),
+        name: z.string(),
+        phone: z.string(),
+        address: z.string(),
+    }),
+}, async (clientData) => {
+    return addClient(clientData);
+});
 
 
 const MessageSchema = z.object({
@@ -103,20 +121,30 @@ export async function generateInitialResponse(input: GenerateInitialResponseInpu
 const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: GenerateInitialResponseInputSchema},
-  tools: [getBeverageStockTool, createOrderTool, findOrCreateClientByPhoneTool],
+  tools: [getBeverageStockTool, createOrderTool, findClientByPhoneTool, createClientTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
 You must respond in Spanish.
-You can answer questions about products and create orders.
+You can answer questions about products and create orders for clients.
 
-**Client Information:**
-- The current active client's phone number is: {{activeClientPhone}}.
-- If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), and the 'activeClientPhone' is not null or empty, you MUST use the \`findOrCreateClientByPhone\` tool with the \`activeClientPhone\` to get their name and respond with the name provided by the tool. If 'activeClientPhone' is null, you must tell them to select a client.
+**Client Information & Order Process:**
+Your primary goal is to create orders for clients. To do this, you need a client ID.
 
-**Order Process:**
-1.  **Check for Active Client**: When a user asks to create an order, you must first check if you have an \`activeClientPhone\`.
-2.  **Get Client ID**: If \`activeClientPhone\` is NOT null or empty, you MUST use the \`findOrCreateClientByPhone\` tool with that phone number to get the client's ID before using the \`createOrder\` tool.
-3.  **No Active Client**: If \`activeClientPhone\` IS null or empty, you MUST tell the user they need to select a client first using the button in the header. Do NOT try to create an order.
-4.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
+1.  **Check for Active Client**: When a user wants to place an order or asks who they are, you MUST first check if you have an \`activeClientPhone\`. If \`activeClientPhone\` is null or empty, you MUST tell the user they need to select a client using the button in the header. Do NOT proceed.
+
+2.  **Find Existing Client**: If you have an \`activeClientPhone\`, you MUST use the \`findClientByPhoneTool\` to check if the client exists.
+
+3.  **Handle Existing Client**:
+    *   If \`findClientByPhoneTool\` returns a client object, you have their \`id\`. You can now proceed to create an order using the \`createOrderTool\`.
+    *   If the user asks who they are, respond with the name from the client object.
+
+4.  **Handle NEW Client**:
+    *   If \`findClientByPhoneTool\` returns \`null\`, the client is new.
+    *   You MUST NOT create the order yet.
+    *   Instead, you MUST respond to the user by asking for their full name and address. For example: "Veo que eres un cliente nuevo. Para poder procesar tu pedido, por favor dime tu nombre completo y tu dirección."
+    *   Once the user provides their name and address, you MUST use the \`createClientTool\` to create the new client. Provide the name and address from the user's message, and the \`activeClientPhone\` from the input.
+    *   After creating the client, you can then proceed to create their order using \`createOrderTool\`.
+
+5.  **Order Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrderTool\` output.
 
 **General Rules:**
 - If you need information about beverages, use the \`getBeverageStock\` tool.
@@ -126,6 +154,7 @@ Conversation history:
 {{this.role}}: {{this.content}}
 {{/each}}
 
+Client's Phone Number: {{activeClientPhone}}
 User's new message:
 {{message}}`,
 });
@@ -160,3 +189,5 @@ const generateInitialResponseFlow = ai.defineFlow(
     };
   }
 );
+
+    

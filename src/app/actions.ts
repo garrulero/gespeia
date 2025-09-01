@@ -13,7 +13,7 @@ export async function getGeminiResponse(history: Message[], message: string) {
       history: limitedHistory.map(m => ({ role: m.role, content: m.content })),
       message,
     });
-    return { success: true, response: result.response };
+    return { success: true, ...result };
   } catch (error) {
     console.error(error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

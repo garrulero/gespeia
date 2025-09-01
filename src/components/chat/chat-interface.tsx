@@ -38,6 +38,16 @@ export default function ChatInterface() {
         content: result.response,
       };
       setMessages(prev => [...prev, assistantMessage]);
+
+      if (result.order) {
+        const orderPayload = {
+            timestamp: new Date().toISOString(),
+            message: `Order ${result.order.orderId} created successfully.`,
+            context: 'createOrder',
+            data: result.order,
+        };
+        setErrors(prev => [...prev, orderPayload]);
+      }
     } else {
       const errorPayload = {
         timestamp: new Date().toISOString(),
@@ -77,16 +87,16 @@ export default function ChatInterface() {
             <TabsTrigger value="debug">Debug</TabsTrigger>
         </TabsList>
         <div className="flex flex-1 flex-col overflow-hidden">
-            <TabsContent value="chat" className="flex-1 overflow-auto m-0">
+            <TabsContent value="chat" className="flex-1 overflow-auto m-0 flex flex-col">
                 <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
+                 <footer className="border-t bg-card/50 p-2 md:p-4">
+                    <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+                </footer>
             </TabsContent>
             <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
                 <DebugView messages={messages} errors={errors} />
             </TabsContent>
         </div>
-        <footer className="border-t bg-card/50 p-2 md:p-4">
-            <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-        </footer>
       </Tabs>
     </div>
   );

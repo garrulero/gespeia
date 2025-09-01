@@ -68,6 +68,10 @@ export type GenerateInitialResponseInput = z.infer<typeof GenerateInitialRespons
 
 const GenerateInitialResponseOutputSchema = z.object({
   response: z.string().describe('The Gemini-generated response to the user message.'),
+  order: z.object({
+    orderId: z.string(),
+    total: z.number(),
+  }).optional(),
 });
 export type GenerateInitialResponseOutput = z.infer<typeof GenerateInitialResponseOutputSchema>;
 
@@ -78,7 +82,6 @@ export async function generateInitialResponse(input: GenerateInitialResponseInpu
 const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
   input: {schema: z.any()},
-  output: {schema: GenerateInitialResponseOutputSchema},
   tools: [getBeverageStockTool, createOrderTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
 You must respond in Spanish.
@@ -86,7 +89,7 @@ You can answer questions about the products and create orders for the user.
 If you need information about the beverages, use the getBeverageStock tool.
 If the user wants to place an order, use the createOrder tool.
 If there is not enough stock, inform the user of the available quantity and ask if they want to proceed with that amount. If they confirm, you MUST use the createOrder tool with the adjusted quantity.
-When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{orderId}} y el total es de \${{total}}." using the orderId and total from the createOrder tool output.
+When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the orderId and total from the createOrder tool output.
 
 Continue the conversation.
 
@@ -114,10 +117,24 @@ const generateInitialResponseFlow = ai.defineFlow(
             assistant: m.role === 'assistant'
         }
     }));
-    const {output} = await initialResponsePrompt({
+    const llmResponse = await initialResponsePrompt({
         history: transformedHistory,
         message: input.message
     });
-    return output!;
+
+    const toolCalls = llmResponse.toolCalls();
+    const createOrderCall = toolCalls.find(tc => tc.tool === 'createOrder');
+
+    if (createOrderCall) {
+      const order = await createOrderCall.output();
+      return {
+        response: llmResponse.text(),
+        order: order,
+      };
+    }
+
+    return {
+        response: llmResponse.text(),
+    };
   }
 );

@@ -71,23 +71,23 @@ export default function ChatInterface() {
         <GeminiLogo className="h-8 w-8" />
         <h1 className="text-xl font-bold">ChatGemini</h1>
       </header>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="debug">Debug</TabsTrigger>
-          </TabsList>
-          <TabsContent value="chat" className="flex-1 overflow-auto">
-              <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
-          </TabsContent>
-          <TabsContent value="debug" className="flex-1 overflow-y-auto">
-              <DebugView messages={messages} errors={errors} />
-          </TabsContent>
-        </Tabs>
+      <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="debug">Debug</TabsTrigger>
+        </TabsList>
+        <div className="flex flex-1 flex-col overflow-hidden">
+            <TabsContent value="chat" className="flex-1 overflow-auto m-0">
+                <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
+            </TabsContent>
+            <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
+                <DebugView messages={messages} errors={errors} />
+            </TabsContent>
+        </div>
         <footer className="border-t bg-card/50 p-2 md:p-4">
             <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
         </footer>
-      </div>
+      </Tabs>
     </div>
   );
 }

@@ -83,7 +83,7 @@ const MessageSchema = z.object({
 const GenerateInitialResponseInputSchema = z.object({
   history: z.array(MessageSchema).describe("The history of the conversation so far."),
   message: z.string().describe('The user message to respond to.'),
-  activeClientPhone: z.string().nullable().describe('The phone number of the currently active client, if any.'),
+  activeClientPhone: z.string().nullable().describe('The phone number of the currently active client, if any. This is ONLY passed for the very first message of a conversation.'),
 });
 export type GenerateInitialResponseInput = z.infer<typeof GenerateInitialResponseInputSchema>;
 
@@ -109,17 +109,16 @@ You must respond in Spanish.
 You can answer questions about products and create orders.
 
 **Initial Greeting:**
-- If this is the first message of the conversation (the history array is empty) AND there is an \`activeClientPhone\`, you MUST use the \`findOrCreateClientByPhone\` tool to look up the client's name.
+- If an \`activeClientPhone\` is provided, it means this is the very first message of the conversation. You MUST use the \`findOrCreateClientByPhone\` tool to look up the client's name.
 - Then, respond with a greeting that confirms the client you've identified. For example: "¡Hola! Veo que estás usando el número de [nombre del cliente]. ¿En qué puedo ayudarte hoy?"
-- If no client is found or there is no active phone, just give a generic greeting.
+- If no \`activeClientPhone\` is provided, just give a generic greeting.
 
 **Order Process:**
-1.  **Check for Active Client**: Before creating an order, you MUST check if there is an \`activeClientPhone\`.
-2.  **No Active Client**: If \`activeClientPhone\` is null or empty, you MUST tell the user they need to select a client first using the button in the header. DO NOT ask for their details in the chat.
-3.  **Get Client ID**: If there is an \`activeClientPhone\`, use the \`findOrCreateClientByPhone\` tool to get the client's ID.
-4.  **Create Order**: Once you have the client ID, use the \`createOrder\` tool to place the order. You must provide the \`clientId\`.
-5.  **Stock Issues**: If there is not enough stock for an item, inform the user of the available quantity and ask if they want to proceed with that amount.
-6.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
+1.  **Get Client ID**: Before creating an order, you MUST have a client ID. You can get it by using the \`findOrCreateClientByPhone\` tool.
+2.  **No Active Client**: If the user asks to create an order but you don't have a phone number, you MUST tell the user they need to select a client first using the button in the header. DO NOT ask for their details in the chat.
+3.  **Create Order**: Once you have the client ID, use the \`createOrder\` tool to place the order. You must provide the \`clientId\`.
+4.  **Stock Issues**: If there is not enough stock for an item, inform the user of the available quantity and ask if they want to proceed with that amount.
+5.  **Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrder\` tool output.
 
 **General Rules:**
 - If you need information about beverages, use the \`getBeverageStock\` tool.
@@ -141,12 +140,7 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async input => {
-    // When the history array is empty, the LLM will follow the "Initial Greeting" instructions.
-    let llmResponse = await initialResponsePrompt({
-        history: input.history,
-        message: input.message,
-        activeClientPhone: input.activeClientPhone,
-    });
+    let llmResponse = await initialResponsePrompt(input);
     
     while (llmResponse.toolRequest) {
       llmResponse = await llmResponse.toolRequest.next();

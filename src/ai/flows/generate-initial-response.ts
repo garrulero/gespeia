@@ -186,16 +186,21 @@ const generateInitialResponseFlow = ai.defineFlow(
             assistant: m.role === 'assistant'
         }
     }));
-    const llmResponse = await initialResponsePrompt({
-        history: transformedHistory,
-        message: input.message
-    });
 
+    let llmResponse = await initialResponsePrompt({
+      history: transformedHistory,
+      message: input.message
+    });
+    
+    while (llmResponse.toolRequest) {
+      llmResponse = await llmResponse.toolRequest.next();
+    }
+    
     const toolCalls = llmResponse.toolCalls;
     if (toolCalls && toolCalls.length > 0) {
         const createOrderCall = toolCalls.find(tc => tc.tool === 'createOrder');
         if (createOrderCall) {
-          const order = await createOrderCall.output();
+          const order = createOrderCall.output;
           return {
             response: llmResponse.text,
             order: order,

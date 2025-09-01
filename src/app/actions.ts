@@ -16,6 +16,8 @@ export async function getGeminiResponse(payload: { history: Message[], message: 
       message,
       activeClientPhone: activeClientPhone,
     };
+
+    console.log("Sending to AI:", inputToAI);
     
     const result = await generateInitialResponse(inputToAI);
     return { success: true, ...result, rawInput: inputToAI };

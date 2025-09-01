@@ -83,7 +83,7 @@ const MessageSchema = z.object({
 const GenerateInitialResponseInputSchema = z.object({
   history: z.array(MessageSchema).describe("The history of the conversation so far."),
   message: z.string().describe('The user message to respond to.'),
-  activeClientPhone: z.string().nullable().describe('The phone number of the currently active client, if any. This is passed on every message.'),
+  activeClientPhone: z.string().nullable().describe('The phone number of the currently active client, if any.'),
 });
 export type GenerateInitialResponseInput = z.infer<typeof GenerateInitialResponseInputSchema>;
 
@@ -102,14 +102,15 @@ export async function generateInitialResponse(input: GenerateInitialResponseInpu
 
 const initialResponsePrompt = ai.definePrompt({
   name: 'initialResponsePrompt',
-  input: {schema: z.any()},
+  input: {schema: GenerateInitialResponseInputSchema},
   tools: [getBeverageStockTool, createOrderTool, findOrCreateClientByPhoneTool],
   prompt: `You are a helpful chat assistant for a beverage distribution company.
 You must respond in Spanish.
 You can answer questions about products and create orders.
 
 **Client Information:**
-- If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), you MUST use the \`findOrCreateClientByPhone\` tool with the \`activeClientPhone\` to get their name and respond with the name provided by the tool.
+- The current active client's phone number is: {{activeClientPhone}}.
+- If the user asks about their own identity (e.g., 'who am I?', 'what is my name?'), and the 'activeClientPhone' is not null or empty, you MUST use the \`findOrCreateClientByPhone\` tool with the \`activeClientPhone\` to get their name and respond with the name provided by the tool. If 'activeClientPhone' is null, you must tell them to select a client.
 
 **Order Process:**
 1.  **Check for Active Client**: When a user asks to create an order, you must first check if you have an \`activeClientPhone\`.
@@ -120,13 +121,12 @@ You can answer questions about products and create orders.
 **General Rules:**
 - If you need information about beverages, use the \`getBeverageStock\` tool.
 
-Continue the conversation.
-
+Conversation history:
 {{#each history}}
 {{this.role}}: {{this.content}}
 {{/each}}
 
-New user message:
+User's new message:
 {{message}}`,
 });
 

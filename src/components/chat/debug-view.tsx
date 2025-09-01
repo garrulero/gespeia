@@ -1,6 +1,6 @@
 "use client";
 
-import type { Message } from "@/lib/types";
+import { Message } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { ScrollArea } from "../ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
@@ -14,7 +14,6 @@ export type Event = {
 };
 
 type DebugViewProps = {
-  messages: Message[];
   events: Event[];
 };
 
@@ -25,27 +24,15 @@ const iconMap = {
   tool: <Cog className="h-4 w-4 text-amber-500" />,
 }
 
-export function DebugView({ messages, events }: DebugViewProps) {
-  const sortedEvents = [...events].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+export function DebugView({ events }: DebugViewProps) {
+  const sortedEvents = [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   
   const rawInputs = sortedEvents.filter(e => e.type === 'input');
-  const toolAndErrorEvents = sortedEvents.filter(e => e.type === 'tool' || e.type === 'error');
+  const toolAndErrorEvents = sortedEvents.filter(e => e.type === 'tool' || e.type === 'error' || e.type === 'info');
 
   return (
     <div className="p-4 space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle>Conversation History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-48">
-            <pre className="text-sm">
-              {JSON.stringify(messages, null, 2)}
-            </pre>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-       <Card>
         <CardHeader>
           <CardTitle>Raw AI Input</CardTitle>
         </CardHeader>
@@ -77,7 +64,7 @@ export function DebugView({ messages, events }: DebugViewProps) {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Tool Calls & Errors</CardTitle>
+          <CardTitle>Tool Calls, Events & Errors</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-48">
@@ -93,7 +80,7 @@ export function DebugView({ messages, events }: DebugViewProps) {
                         </AccordionTrigger>
                         <AccordionContent>
                             <pre className="text-sm bg-muted p-2 rounded-md overflow-x-auto">
-                                {JSON.stringify(event.data || event, null, 2)}
+                                {JSON.stringify(event.data || event.message, null, 2)}
                             </pre>
                         </AccordionContent>
                     </AccordionItem>

@@ -116,6 +116,7 @@ const GenerateInitialResponseOutputSchema = z.object({
     args: z.any(),
     output: z.any().optional(),
   })).optional(),
+  rawInput: GenerateInitialResponseInputSchema.optional(),
 });
 export type GenerateInitialResponseOutput = z.infer<typeof GenerateInitialResponseOutputSchema>;
 
@@ -176,18 +177,22 @@ const generateInitialResponseFlow = ai.defineFlow(
 
     while (llmResponse.toolRequest) {
       // Capture tool requests
-      llmResponse.toolRequest.requests.forEach(req => {
-        toolEvents.push({ tool: req.tool, args: req.input });
+      const toolRequests = llmResponse.toolRequest.requests.map(req => {
+        return { tool: req.tool, args: req.input };
       });
-
+      toolEvents.push(...toolRequests);
+    
       // Execute tools
       const toolResponse = await llmResponse.toolRequest.next();
-
+    
       // Capture tool outputs
       if (toolResponse.toolCalls) {
-        toolResponse.toolCalls.forEach((call, index) => {
-          if (toolEvents[index] && toolEvents[index].tool === call.tool) {
-            toolEvents[index].output = call.output;
+        toolResponse.toolCalls.forEach((call) => {
+          const matchingEvent = toolEvents.find(
+            (event) => event.tool === call.tool && !event.output
+          );
+          if (matchingEvent) {
+            matchingEvent.output = call.output;
           }
         });
       }
@@ -196,12 +201,13 @@ const generateInitialResponseFlow = ai.defineFlow(
     }
     
     // Check for createOrder tool call to extract order details
-    const createOrderEvent = toolEvents.find(tc => tc.tool === 'createOrder');
+    const createOrderEvent = toolEvents.find(tc => tc.tool === 'createOrder' && tc.output);
 
     return {
         response: llmResponse.text,
         order: createOrderEvent ? createOrderEvent.output : undefined,
         toolCalls: toolEvents,
+        rawInput: input,
     };
   }
 );

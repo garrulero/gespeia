@@ -64,9 +64,10 @@ export default function ChatInterface() {
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
+    setDebugEvents([]); // Clear previous debug events
 
     const result = await getGeminiResponse({ 
-        history: newMessages, 
+        history: newMessages.slice(0, -1), // Exclude current user message from history
         message: text, 
         activeClientPhone: activeClient 
     });
@@ -87,12 +88,12 @@ export default function ChatInterface() {
         
         if (result.toolCalls && result.toolCalls.length > 0) {
             result.toolCalls.forEach(tc => {
-                addDebugEvent(`Tool Call: ${tc.tool}`, tc.args, 'tool');
+                addDebugEvent(`Tool Call: ${tc.tool}`, { args: tc.args, output: tc.output }, 'tool');
             });
         }
         
         if (result.order) {
-            addDebugEvent(`Order ${result.order.orderId} created`, result.order, 'tool');
+            addDebugEvent(`Order ${result.order.orderId} created`, result.order, 'info');
         }
     } else {
         addDebugEvent(result.error || "Sorry, I couldn't get a response. Please try again.", undefined, 'error');
@@ -169,7 +170,7 @@ export default function ChatInterface() {
                 <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
             </TabsContent>
             <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
-                <DebugView messages={messages} events={debugEvents} />
+                <DebugView events={debugEvents} />
             </TabsContent>
         </div>
         <footer className="border-t bg-card/50 p-2 md:p-4">

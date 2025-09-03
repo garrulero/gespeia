@@ -96,12 +96,29 @@ export default function ChatInterface() {
             addDebugEvent(`Order ${result.order.orderId} created`, result.order, 'info');
         }
     } else {
-        addDebugEvent(result.error || "Sorry, I couldn't get a response. Please try again.", undefined, 'error');
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: result.error || "An unknown error occurred.",
-        });
+        const errorMessage = result.error || "An unknown error occurred.";
+        addDebugEvent(errorMessage, undefined, 'error');
+
+        if (errorMessage.includes("503") || errorMessage.toLowerCase().includes("overloaded")) {
+             const serviceUnavailableMessage: Message = {
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content: "Lo siento, el servicio de IA está sobrecargado en este momento. Por favor, inténtalo de nuevo en unos momentos.",
+            };
+            setMessages(prev => [...prev, serviceUnavailableMessage]);
+            toast({
+                variant: "destructive",
+                title: "Servicio no disponible",
+                description: "El modelo de IA está sobrecargado. Inténtalo más tarde.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: errorMessage,
+            });
+        }
+
       // remove the user message if the call fails
       setMessages(messages);
     }

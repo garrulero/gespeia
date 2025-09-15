@@ -186,27 +186,25 @@ const generateInitialResponseFlow = ai.defineFlow(
     outputSchema: GenerateInitialResponseOutputSchema,
   },
   async (input) => {
-    const toolEvents: { tool: string; args: any; output?: any }[] = [];
+    const toolEvents: { tool: string; args: any; output?: any, processed: boolean }[] = [];
     let llmResponse = await initialResponsePrompt(input);
 
     while (llmResponse.toolRequest) {
       
-      // Step 1: Log the tool requests immediately
       llmResponse.toolRequest.requests.forEach(req => {
-        toolEvents.push({ tool: req.tool, args: req.input });
+        toolEvents.push({ tool: req.tool, args: req.input, processed: false });
       });
 
-      // Step 2: Execute the tools
       const toolResponse = await llmResponse.toolRequest.next();
 
-      // Step 3: Match the tool responses with the logged requests and add the output
       if (toolResponse.toolCalls) {
         toolResponse.toolCalls.forEach((call) => {
           const matchingEvent = toolEvents.find(
-            (event) => event.tool === call.tool && !('output' in event)
+            (event) => event.tool === call.tool && !event.processed
           );
           if (matchingEvent) {
             matchingEvent.output = call.output;
+            matchingEvent.processed = true;
           }
         });
       }
@@ -220,7 +218,7 @@ const generateInitialResponseFlow = ai.defineFlow(
     return {
         response: llmResponse.text,
         order: createOrderEvent ? createOrderEvent.output : undefined,
-        toolCalls: toolEvents,
+        toolCalls: toolEvents.map(({ processed, ...rest}) => rest),
         rawInput: input,
     };
   }

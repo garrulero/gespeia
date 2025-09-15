@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
-import type { Message } from '@/lib/types';
+import type { Message, LayoutMode } from '@/lib/types';
 import { getGeminiResponse } from '@/app/actions';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
@@ -21,8 +22,14 @@ import {
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { User } from 'lucide-react';
+import LayoutSwitcher from '../layout/layout-switcher';
 
-export default function ChatInterface() {
+type ChatInterfaceProps = {
+  layout: LayoutMode;
+  onLayoutChange: (mode: LayoutMode) => void;
+};
+
+export default function ChatInterface({ layout, onLayoutChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [debugEvents, setDebugEvents] = useState<Event[]>([]);
@@ -175,6 +182,7 @@ export default function ChatInterface() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <LayoutSwitcher layout={layout} onLayoutChange={onLayoutChange} />
         </div>
       </header>
       <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">

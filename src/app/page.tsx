@@ -7,8 +7,6 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { LayoutMode } from '@/lib/types';
 import LayoutSwitcher from '@/components/layout/layout-switcher';
-import { GeminiLogo } from '@/components/icons/gemini-logo';
-
 
 export default function Home() {
   const [layout, setLayout] = useState<LayoutMode>('split');
@@ -29,7 +27,7 @@ export default function Home() {
           })}>
             <BeverageManager />
           </div>
-          <div className={cn("h-full", {
+          <div className={cn("h-full overflow-y-auto", {
             "hidden": layout === 'app',
             "block": layout === 'chat' || layout === 'split',
           })}>

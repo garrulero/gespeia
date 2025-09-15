@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -22,14 +23,12 @@ import {
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { User } from 'lucide-react';
-import LayoutSwitcher from '../layout/layout-switcher';
 
 type ChatInterfaceProps = {
-  layout: LayoutMode;
   onLayoutChange: (mode: LayoutMode) => void;
 };
 
-export default function ChatInterface({ layout, onLayoutChange }: ChatInterfaceProps) {
+export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [debugEvents, setDebugEvents] = useState<Event[]>([]);
@@ -73,6 +72,12 @@ export default function ChatInterface({ layout, onLayoutChange }: ChatInterfaceP
     setIsLoading(true);
     setDebugEvents([]); // Clear previous debug events
 
+    addDebugEvent('Raw input to AI', { 
+        history: newMessages.slice(0, -1),
+        message: text, 
+        activeClientPhone: activeClient 
+    }, 'input');
+
     const result = await getGeminiResponse({ 
         history: newMessages.slice(0, -1), // Exclude current user message from history
         message: text, 
@@ -87,10 +92,6 @@ export default function ChatInterface({ layout, onLayoutChange }: ChatInterfaceP
                 content: result.response,
             };
             setMessages(prev => [...prev, assistantMessage]);
-        }
-
-        if (result.rawInput) {
-            addDebugEvent('Raw input to AI', result.rawInput, 'input');
         }
         
         if (result.toolCalls && result.toolCalls.length > 0) {
@@ -182,7 +183,6 @@ export default function ChatInterface({ layout, onLayoutChange }: ChatInterfaceP
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <LayoutSwitcher layout={layout} onLayoutChange={onLayoutChange} />
         </div>
       </header>
       <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">

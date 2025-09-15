@@ -7,7 +7,6 @@ import type { Message, LayoutMode } from '@/lib/types';
 import { getGeminiResponse } from '@/app/actions';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
-import { GeminiLogo } from '../icons/gemini-logo';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DebugView, Event } from './debug-view';
@@ -143,22 +142,18 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="flex h-screen w-full flex-col bg-background">
-      <header className="flex items-center justify-between border-b bg-primary px-4 py-3 text-primary-foreground shadow-md">
-        <div className="flex items-center gap-3">
-            <GeminiLogo className="h-8 w-8" />
-            <h1 className="text-xl font-bold">ChatGemini</h1>
-        </div>
+    <div className="flex h-full w-full flex-col bg-background">
+      <header className="flex items-center justify-end border-b bg-card px-4 py-2 text-card-foreground">
         <div className="flex items-center gap-2">
             {activeClient && (
-                <div className="flex items-center gap-2 text-sm bg-primary-foreground/20 px-3 py-1 rounded-full">
+                <div className="flex items-center gap-2 text-sm bg-muted px-3 py-1 rounded-full">
                     <User className="h-4 w-4" />
                     <span>{activeClient}</span>
                 </div>
             )}
             <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="secondary" size="sm">Seleccionar Cliente</Button>
+                    <Button variant="outline" size="sm">Seleccionar Cliente</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>

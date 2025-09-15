@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LayoutMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { PanelLeft, PanelRight, PanelsTopLeft } from "lucide-react";
+import { PanelLeft, PanelsTopLeft, PanelRight } from "lucide-react";
 
 type LayoutSwitcherProps = {
     layout: LayoutMode;
@@ -20,7 +20,7 @@ export default function LayoutSwitcher({ layout, onLayoutChange }: LayoutSwitche
     ];
     
     return (
-        <div className="flex items-center gap-1 rounded-lg bg-secondary p-1">
+        <div className="flex items-center gap-1 rounded-lg bg-primary/20 p-1">
              <TooltipProvider delayDuration={200}>
                 {layouts.map((item) => (
                     <Tooltip key={item.mode}>
@@ -28,8 +28,8 @@ export default function LayoutSwitcher({ layout, onLayoutChange }: LayoutSwitche
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className={cn("h-8 w-8", {
-                                    "bg-background text-foreground shadow-sm": layout === item.mode,
+                                className={cn("h-8 w-8 text-primary-foreground/80 hover:text-primary-foreground", {
+                                    "bg-primary-foreground/10 text-primary-foreground shadow-sm": layout === item.mode,
                                 })}
                                 onClick={() => onLayoutChange(item.mode)}
                             >

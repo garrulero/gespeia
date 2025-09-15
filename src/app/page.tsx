@@ -7,33 +7,40 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { LayoutMode } from '@/lib/types';
 import LayoutSwitcher from '@/components/layout/layout-switcher';
+import { GeminiLogo } from '@/components/icons/gemini-logo';
 
 
 export default function Home() {
   const [layout, setLayout] = useState<LayoutMode>('split');
 
   return (
-    <div className="relative h-screen w-screen">
-      <div className="absolute top-2 right-2 z-10">
+    <>
+      <header className="flex items-center justify-between border-b bg-primary px-4 py-3 text-primary-foreground shadow-md">
+        <div className="flex items-center gap-3">
+            <GeminiLogo className="h-8 w-8" />
+            <h1 className="text-xl font-bold">ChatGemini</h1>
+        </div>
         <LayoutSwitcher layout={layout} onLayoutChange={setLayout} />
-      </div>
-      <div className={cn(
-        "grid h-full w-full transition-all duration-300",
-        layout === 'split' ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
-      )}>
-        <div className={cn("h-screen overflow-y-auto border-r bg-slate-50", {
-          "hidden": layout === 'chat',
-          "block": layout === 'app' || layout === 'split',
-        })}>
-          <BeverageManager />
+      </header>
+      <main className="flex-1 overflow-hidden">
+        <div className={cn(
+          "grid h-full w-full transition-all duration-300",
+          layout === 'split' ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+        )}>
+          <div className={cn("h-full overflow-y-auto border-r bg-slate-50", {
+            "hidden": layout === 'chat',
+            "block": layout === 'app' || layout === 'split',
+          })}>
+            <BeverageManager />
+          </div>
+          <div className={cn("h-full", {
+            "hidden": layout === 'app',
+            "block": layout === 'chat' || layout === 'split',
+          })}>
+            <ChatInterface onLayoutChange={setLayout} />
+          </div>
         </div>
-        <div className={cn("h-screen", {
-          "hidden": layout === 'app',
-          "block": layout === 'chat' || layout === 'split',
-        })}>
-          <ChatInterface onLayoutChange={setLayout} />
-        </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }

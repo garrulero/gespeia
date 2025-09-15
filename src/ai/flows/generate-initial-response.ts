@@ -60,17 +60,26 @@ const createOrderTool = ai.defineTool(
 const findClientByPhoneTool = ai.defineTool(
   {
     name: 'findClientByPhone',
-    description: "Finds a client by their phone number. Returns the client object or null if not found.",
+    description: "Finds a client by their phone number. Returns the client object or an error if not found.",
     inputSchema: z.object({ phone: z.string().describe('The phone number of the client.') }),
-    outputSchema: z.object({
-        id: z.string(),
-        name: z.string(),
-        phone: z.string(),
-        address: z.string(),
-    }).nullable(),
+    outputSchema: z.union([
+        z.object({
+            id: z.string(),
+            name: z.string(),
+            phone: z.string(),
+            address: z.string(),
+        }),
+        z.object({
+            error: z.string(),
+        })
+    ]),
   },
   async ({ phone }) => {
-    return findClientByPhone(phone);
+    const client = await findClientByPhone(phone);
+    if (client) {
+        return client;
+    }
+    return { error: 'Client not found' };
   }
 );
 
@@ -154,11 +163,11 @@ Your primary goal is to create orders for clients. To do this, you need a client
 2.  **Find Existing Client**: If you have an \`activeClientPhone\`, you MUST use the \`findClientByPhoneTool\` to check if the client exists.
 
 3.  **Handle Existing Client**:
-    *   If \`findClientByPhoneTool\` returns a client object, you have their \`id\`. You can now proceed to create an order using the \`createOrderTool\`.
+    *   If \`findClientByPhoneTool\` returns a client object (without an 'error' field), you have their \`id\`. You can now proceed to create an order using the \`createOrderTool\`.
     *   If the user asks who they are, respond with the name from the client object.
 
 4.  **Handle NEW Client**:
-    *   If \`findClientByPhoneTool\` returns \`null\`, the client is new.
+    *   If \`findClientByPhoneTool\` returns an object with an 'error' field, the client is new.
     *   You MUST NOT create the order yet.
     *   Instead, you MUST respond to the user by asking for their full name and address. For example: "Veo que eres un cliente nuevo. Para poder procesar tu pedido, por favor dime tu nombre completo y tu dirección."
     *   Once the user provides their name and address, you MUST use the \`createClientTool\` to create the new client. Provide the name and address from the user's message, and the \`activeClientPhone\` from the input.
@@ -223,3 +232,4 @@ const generateInitialResponseFlow = ai.defineFlow(
     };
   }
 );
+

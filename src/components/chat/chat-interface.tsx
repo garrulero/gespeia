@@ -133,14 +133,6 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
     setIsLoading(false);
   };
 
-  const updateMessage = (messageId: string, newContent: string) => {
-    setMessages(prevMessages =>
-      prevMessages.map(msg =>
-        msg.id === messageId ? { ...msg, content: newContent } : msg
-      )
-    );
-  };
-
   return (
     <div className="flex h-full w-full flex-col bg-background">
       <header className="flex items-center justify-between border-b bg-card px-4 py-2 text-card-foreground">
@@ -188,7 +180,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
         </TabsList>
         <div className="flex flex-1 flex-col overflow-hidden">
             <TabsContent value="chat" className="flex-1 overflow-auto m-0 flex flex-col">
-                <ChatMessages messages={messages} isLoading={isLoading} onUpdateMessage={updateMessage} />
+                <ChatMessages messages={messages} isLoading={isLoading} />
             </TabsContent>
             <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
                 <DebugView events={debugEvents} />

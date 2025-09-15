@@ -8,10 +8,9 @@ import type { Message } from '@/lib/types';
 type ChatMessagesProps = {
   messages: Message[];
   isLoading: boolean;
-  onUpdateMessage: (messageId: string, newContent: string) => void;
 };
 
-export function ChatMessages({ messages, isLoading, onUpdateMessage }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +29,6 @@ export function ChatMessages({ messages, isLoading, onUpdateMessage }: ChatMessa
             <ChatMessage
               key={message.id}
               message={message}
-              onUpdateMessage={onUpdateMessage}
             />
         ))}
         {isLoading && (

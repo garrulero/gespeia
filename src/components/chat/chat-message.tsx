@@ -3,50 +3,13 @@
 import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/types";
 import { ChatAvatar } from "./chat-avatar";
-import { Button } from "../ui/button";
-import { Sparkles } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { useState } from "react";
-import { getAlternativeResponses } from "@/app/actions";
-import { Skeleton } from "../ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 
 type ChatMessageProps = {
   message: Message;
   isLoading?: boolean;
-  onUpdateMessage?: (messageId: string, newContent: string) => void;
 };
 
-export function ChatMessage({ message, isLoading = false, onUpdateMessage }: ChatMessageProps) {
-  const [alternatives, setAlternatives] = useState<string[]>([]);
-  const [isFetchingAlternatives, setIsFetchingAlternatives] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const { toast } = useToast();
-
-  const handleFetchAlternatives = async () => {
-    if (alternatives.length > 0) return;
-    setIsFetchingAlternatives(true);
-    const result = await getAlternativeResponses(message.content);
-    if (result.success && result.alternatives) {
-      setAlternatives(result.alternatives);
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: result.error || "Could not fetch alternatives."
-        })
-        setPopoverOpen(false);
-    }
-    setIsFetchingAlternatives(false);
-  };
-
-  const handleSelectAlternative = (alt: string) => {
-    if (onUpdateMessage) {
-      onUpdateMessage(message.id, alt);
-    }
-    setPopoverOpen(false);
-  };
-  
+export function ChatMessage({ message, isLoading = false }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -72,52 +35,6 @@ export function ChatMessage({ message, isLoading = false, onUpdateMessage }: Cha
             </div>
           ) : (
             <p className="text-sm text-foreground whitespace-pre-wrap">{message.content}</p>
-          )}
-
-          {!isUser && !isLoading && onUpdateMessage && (
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute -right-10 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handleFetchAlternatives}
-                >
-                  <Sparkles className="h-4 w-4 text-accent" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Alternative Responses</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Choose a different response.
-                    </p>
-                  </div>
-                  <div className="grid gap-2">
-                    {isFetchingAlternatives ? (
-                      <div className="space-y-2">
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
-                      </div>
-                    ) : (
-                      alternatives.map((alt, i) => (
-                        <Button
-                          key={i}
-                          variant="outline"
-                          size="sm"
-                          className="h-auto justify-start text-left whitespace-normal"
-                          onClick={() => handleSelectAlternative(alt)}
-                        >
-                          {alt}
-                        </Button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
           )}
         </div>
       </div>

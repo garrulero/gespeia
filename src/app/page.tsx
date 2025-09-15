@@ -19,17 +19,16 @@ export default function Home() {
       </div>
       <div className={cn(
         "grid h-full w-full transition-all duration-300",
-        layout === 'split' && "grid-cols-1 md:grid-cols-2",
-        (layout === 'app' || layout === 'chat') && "grid-cols-1"
+        layout === 'split' ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
       )}>
         <div className={cn("h-screen overflow-y-auto border-r bg-slate-50", {
-          "hidden md:block": layout === 'chat',
+          "hidden": layout === 'chat',
           "block": layout === 'app' || layout === 'split',
         })}>
           <BeverageManager />
         </div>
         <div className={cn("h-screen", {
-          "hidden md:block": layout === 'app',
+          "hidden": layout === 'app',
           "block": layout === 'chat' || layout === 'split',
         })}>
           <ChatInterface onLayoutChange={setLayout} />

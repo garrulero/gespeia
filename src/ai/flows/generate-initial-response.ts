@@ -203,7 +203,7 @@ const generateInitialResponseFlow = ai.defineFlow(
       if (toolResponse.toolCalls) {
         toolResponse.toolCalls.forEach((call) => {
           const matchingEvent = toolEvents.find(
-            (event) => event.tool === call.tool && event.output === undefined // Find the first event for this tool that doesn't have an output yet
+            (event) => event.tool === call.tool && !('output' in event)
           );
           if (matchingEvent) {
             matchingEvent.output = call.output;

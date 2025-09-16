@@ -11,7 +11,6 @@ export type Client = {
 let clients: Client[] = [
   { id: '1', name: 'Cliente de Ejemplo 1', phone: '123-456-7890', address: '123 Calle Falsa, Ciudad' },
   { id: '2', name: 'Restaurante El Buen Sabor', phone: '098-765-4321', address: 'Avenida Siempre Viva 456' },
-  { id: '3', name: 'Raul Rojo Valle', phone: '625707022', address: 'ATXETA N4, 1ºA' },
 ];
 
 export async function getClients(): Promise<Client[]> {

@@ -19,6 +19,15 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { User } from 'lucide-react';
@@ -27,6 +36,8 @@ type ChatInterfaceProps = {
   onLayoutChange: (mode: LayoutMode) => void;
 };
 
+const MESSAGE_LIMIT = 100;
+
 export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +45,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   const [activeClient, setActiveClient] = useState<string | null>(null);
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [clientPhoneInput, setClientPhoneInput] = useState("");
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -58,6 +70,11 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   };
 
   const handleSendMessage = async (text: string) => {
+    if (messages.length >= MESSAGE_LIMIT) {
+      setIsLimitModalOpen(true);
+      return;
+    }
+
     if (!text.trim()) return;
 
     const userMessage: Message = {
@@ -133,63 +150,83 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
     setIsLoading(false);
   };
 
+  const isChatLocked = messages.length >= MESSAGE_LIMIT;
+
   return (
-    <div className="flex h-full w-full flex-col bg-background">
-      <header className="flex items-center justify-between border-b bg-card px-4 py-2 text-card-foreground">
-        <h2 className="text-lg font-semibold">Chat</h2>
-        <div className="flex items-center gap-2">
-            {activeClient && (
-                <div className="flex items-center gap-2 text-sm bg-muted px-3 py-1 rounded-full">
-                    <User className="h-4 w-4" />
-                    <span>{activeClient}</span>
-                </div>
-            )}
-            <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">Seleccionar Cliente</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Seleccionar o Crear Cliente</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="phone" className="text-right">
-                                Teléfono
-                            </Label>
-                            <Input
-                                id="phone"
-                                value={clientPhoneInput}
-                                onChange={(e) => setClientPhoneInput(e.target.value)}
-                                className="col-span-3"
-                                placeholder="Número de teléfono ficticio"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleSetClient}>Guardar Cliente</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
-      </header>
-      <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
-        <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="debug">Debug</TabsTrigger>
-        </TabsList>
-        <div className="flex flex-1 flex-col overflow-hidden">
-            <TabsContent value="chat" className="flex-1 overflow-auto m-0 flex flex-col">
-                <ChatMessages messages={messages} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
-                <DebugView events={debugEvents} />
-            </TabsContent>
-        </div>
-        <footer className="border-t bg-card/50 p-2 md:p-4">
-            <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-        </footer>
-      </Tabs>
-    </div>
+    <>
+      <AlertDialog open={isLimitModalOpen} onOpenChange={setIsLimitModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Límite de la demo alcanzado</AlertDialogTitle>
+            <AlertDialogDescription>
+              Has alcanzado el límite de {MESSAGE_LIMIT} mensajes para esta sesión de demostración. Esto ayuda a mantener el servicio disponible para todos.
+              <br /><br />
+              Para continuar, por favor, recarga la página para iniciar una nueva conversación.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => window.location.reload()}>Recargar página</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex h-full w-full flex-col bg-background">
+        <header className="flex items-center justify-between border-b bg-card px-4 py-2 text-card-foreground">
+          <h2 className="text-lg font-semibold">Chat</h2>
+          <div className="flex items-center gap-2">
+              {activeClient && (
+                  <div className="flex items-center gap-2 text-sm bg-muted px-3 py-1 rounded-full">
+                      <User className="h-4 w-4" />
+                      <span>{activeClient}</span>
+                  </div>
+              )}
+              <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+                  <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">Seleccionar Cliente</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>Seleccionar o Crear Cliente</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="phone" className="text-right">
+                                  Teléfono
+                              </Label>
+                              <Input
+                                  id="phone"
+                                  value={clientPhoneInput}
+                                  onChange={(e) => setClientPhoneInput(e.target.value)}
+                                  className="col-span-3"
+                                  placeholder="Número de teléfono ficticio"
+                              />
+                          </div>
+                      </div>
+                      <DialogFooter>
+                          <Button onClick={handleSetClient}>Guardar Cliente</Button>
+                      </DialogFooter>
+                  </DialogContent>
+              </Dialog>
+          </div>
+        </header>
+        <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="debug">Debug</TabsTrigger>
+          </TabsList>
+          <div className="flex flex-1 flex-col overflow-hidden">
+              <TabsContent value="chat" className="flex-1 overflow-auto m-0 flex flex-col">
+                  <ChatMessages messages={messages} isLoading={isLoading} />
+              </TabsContent>
+              <TabsContent value="debug" className="flex-1 overflow-y-auto m-0">
+                  <DebugView events={debugEvents} />
+              </TabsContent>
+          </div>
+          <footer className="border-t bg-card/50 p-2 md:p-4">
+              <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} isLocked={isChatLocked} />
+          </footer>
+        </Tabs>
+      </div>
+    </>
   );
 }

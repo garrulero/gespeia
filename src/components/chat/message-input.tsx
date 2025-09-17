@@ -16,9 +16,10 @@ const formSchema = z.object({
 type MessageInputProps = {
   onSendMessage: (text: string) => void;
   isLoading: boolean;
+  isLocked?: boolean;
 };
 
-export function MessageInput({ onSendMessage, isLoading }: MessageInputProps) {
+export function MessageInput({ onSendMessage, isLoading, isLocked = false }: MessageInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,6 +59,8 @@ export function MessageInput({ onSendMessage, isLoading }: MessageInputProps) {
     }
   };
 
+  const isDisabled = isLoading || isLocked;
+
   return (
     <Form {...form}>
       <form
@@ -73,19 +76,19 @@ export function MessageInput({ onSendMessage, isLoading }: MessageInputProps) {
                 <Textarea
                   {...field}
                   ref={textareaRef}
-                  placeholder="Type your message..."
+                  placeholder={isLocked ? "Límite de mensajes alcanzado." : "Type your message..."}
                   rows={1}
                   onInput={handleInput}
                   onKeyDown={handleKeyDown}
                   className="max-h-36 resize-none"
-                  disabled={isLoading}
+                  disabled={isDisabled}
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        <Button type="submit" size="icon" disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}>
+        <Button type="submit" size="icon" disabled={isDisabled || !form.formState.isDirty || !form.formState.isValid}>
           <SendHorizontal className="h-5 w-5" />
           <span className="sr-only">Send</span>
         </Button>

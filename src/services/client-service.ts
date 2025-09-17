@@ -1,3 +1,4 @@
+
 "use server";
 
 export type Client = {
@@ -45,4 +46,11 @@ export async function addClient(clientData: Omit<Client, 'id'>): Promise<Client>
     return Promise.resolve(newClient);
 }
 
-    
+export async function deleteClient(id: string): Promise<void> {
+    const initialLength = clients.length;
+    clients = clients.filter(client => client.id !== id);
+    if (clients.length === initialLength) {
+        throw new Error(`Client with id "${id}" not found.`);
+    }
+    return Promise.resolve();
+}

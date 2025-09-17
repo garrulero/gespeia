@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'ChatGemini',
+  title: 'GesPeIA - Demo',
   description: 'WhatsApp simulator connected to Gemini',
 };
 

@@ -38,8 +38,21 @@ export default function Home() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <header className="flex items-center justify-center border-b bg-primary px-4 py-3 text-primary-foreground shadow-md">
-        <LayoutSwitcher layout={layout} onLayoutChange={setLayout} />
+      <header className="flex items-center justify-between border-b bg-primary px-4 py-3 text-primary-foreground shadow-md">
+        <div className="w-1/3"></div>
+        <div className="w-1/3 flex justify-center">
+            <LayoutSwitcher layout={layout} onLayoutChange={setLayout} />
+        </div>
+        <div className="w-1/3 flex justify-end">
+             <a
+                href="https://www.goilab.com/agendar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="animate-pulse-orange-bright inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-orange-500 text-white hover:bg-orange-600 h-9 px-4 py-2"
+            >
+                Me interesa
+            </a>
+        </div>
       </header>
       <main className="flex-1 overflow-hidden">
         <div className={cn(

@@ -70,3 +70,14 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+    @keyframes pulse-orange {
+      50% {
+        box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.4);
+      }
+    }
+    .animate-pulse-orange-bright {
+      animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+}

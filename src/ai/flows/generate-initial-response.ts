@@ -196,7 +196,19 @@ const generateInitialResponseFlow = ai.defineFlow(
   },
   async (input) => {
     const toolEvents: { tool: string; args: any; output?: any, processed: boolean }[] = [];
-    let llmResponse = await initialResponsePrompt(input);
+    let llmResponse;
+    try {
+      llmResponse = await initialResponsePrompt(input);
+    } catch (error: any) {
+      if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
+        // Retry with the fallback model if the primary is overloaded
+        llmResponse = await initialResponsePrompt(input, { model: 'googleai/gemini-2.5-pro' });
+      } else {
+        // Re-throw other errors
+        throw error;
+      }
+    }
+
 
     while (llmResponse.toolRequest) {
       
@@ -232,4 +244,3 @@ const generateInitialResponseFlow = ai.defineFlow(
     };
   }
 );
-

@@ -48,6 +48,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [clientPhoneInput, setClientPhoneInput] = useState("");
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [clientList, setClientList] = useState<Client[]>([]);
 
   const { toast } = useToast();
@@ -139,7 +140,11 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
         const errorMessage = result.error || "An unknown error occurred.";
         addDebugEvent(errorMessage, undefined, 'error');
 
-        if (errorMessage.includes("503") || errorMessage.toLowerCase().includes("overloaded")) {
+        const lowerCaseError = errorMessage.toLowerCase();
+
+        if (lowerCaseError.includes("429") || lowerCaseError.includes("quota")) {
+            setIsQuotaModalOpen(true);
+        } else if (lowerCaseError.includes("503") || lowerCaseError.includes("overloaded")) {
              const serviceUnavailableMessage: Message = {
                 id: crypto.randomUUID(),
                 role: 'assistant',
@@ -182,6 +187,22 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => window.location.reload()}>Recargar página</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isQuotaModalOpen} onOpenChange={setIsQuotaModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Límite de la Demo Gratuita Superado</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta es una aplicación de demostración que utiliza una capa gratuita de la API de IA, la cual tiene un límite en la cantidad de solicitudes que se pueden realizar por minuto.
+              <br /><br />
+              Parece que el servicio está experimentando un alto volumen de solicitudes en este momento. Por favor, espera un minuto y vuelve a intentarlo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsQuotaModalOpen(false)}>Entendido</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

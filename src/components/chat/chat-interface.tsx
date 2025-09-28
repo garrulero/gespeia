@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Message, LayoutMode } from '@/lib/types';
 import { getGeminiResponse } from '@/app/actions';
 import { ChatMessages } from './chat-messages';
@@ -30,7 +30,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { User } from 'lucide-react';
+import { User, Users } from 'lucide-react';
+import { getClients, Client } from '@/services/client-service';
+import { ScrollArea } from '../ui/scroll-area';
 
 type ChatInterfaceProps = {
   onLayoutChange: (mode: LayoutMode) => void;
@@ -46,8 +48,21 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [clientPhoneInput, setClientPhoneInput] = useState("");
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [clientList, setClientList] = useState<Client[]>([]);
 
   const { toast } = useToast();
+
+  const fetchClients = async () => {
+    const clients = await getClients();
+    setClientList(clients);
+  };
+
+  const handleOpenClientDialog = (isOpen: boolean) => {
+    if (isOpen) {
+      fetchClients();
+    }
+    setIsClientDialogOpen(isOpen);
+  }
 
   const addDebugEvent = (message: string, data?: any, type: Event['type'] = 'info') => {
     setDebugEvents(prev => [...prev, {
@@ -58,13 +73,14 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
     }]);
   };
 
-  const handleSetClient = () => {
-    if (clientPhoneInput) {
-      setActiveClient(clientPhoneInput);
+  const handleSetClient = (phone: string) => {
+    if (phone) {
+      setActiveClient(phone);
       setIsClientDialogOpen(false);
+      setClientPhoneInput("");
       toast({
         title: "Cliente seleccionado",
-        description: `Los pedidos se realizarán para el teléfono: ${clientPhoneInput}`,
+        description: `Los pedidos se realizarán para el teléfono: ${phone}`,
       });
     }
   };
@@ -180,7 +196,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
                       <span>{activeClient}</span>
                   </div>
               )}
-              <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+              <Dialog open={isClientDialogOpen} onOpenChange={handleOpenClientDialog}>
                   <DialogTrigger asChild>
                       <Button variant="outline" size="sm">Seleccionar Cliente</Button>
                   </DialogTrigger>
@@ -188,23 +204,44 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
                       <DialogHeader>
                           <DialogTitle>Seleccionar o Crear Cliente</DialogTitle>
                       </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="phone" className="text-right">
-                                  Teléfono
-                              </Label>
-                              <Input
-                                  id="phone"
-                                  value={clientPhoneInput}
-                                  onChange={(e) => setClientPhoneInput(e.target.value)}
-                                  className="col-span-3"
-                                  placeholder="Número de teléfono ficticio"
-                              />
-                          </div>
-                      </div>
-                      <DialogFooter>
-                          <Button onClick={handleSetClient}>Guardar Cliente</Button>
-                      </DialogFooter>
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium text-muted-foreground">Seleccionar un cliente existente</h3>
+                            <ScrollArea className="h-48">
+                                <div className="space-y-2 pr-4">
+                                    {clientList.length > 0 ? clientList.map(client => (
+                                        <Button 
+                                            key={client.id} 
+                                            variant="outline" 
+                                            className="w-full justify-start"
+                                            onClick={() => handleSetClient(client.phone)}
+                                        >
+                                            <div className="flex flex-col items-start">
+                                                <span className="font-semibold">{client.name}</span>
+                                                <span className="text-xs text-muted-foreground">{client.phone}</span>
+                                            </div>
+                                        </Button>
+                                    )) : (
+                                        <div className="text-center text-muted-foreground py-4">
+                                            <Users className="mx-auto h-8 w-8" />
+                                            <p className="text-sm">No hay clientes registrados.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+                            
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-medium text-muted-foreground">O introducir teléfono para un nuevo cliente</h3>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id="phone"
+                                        value={clientPhoneInput}
+                                        onChange={(e) => setClientPhoneInput(e.target.value)}
+                                        placeholder="Número de teléfono ficticio"
+                                    />
+                                    <Button onClick={() => handleSetClient(clientPhoneInput)} disabled={!clientPhoneInput}>Guardar</Button>
+                                </div>
+                            </div>
+                        </div>
                   </DialogContent>
               </Dialog>
           </div>

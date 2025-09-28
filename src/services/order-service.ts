@@ -19,7 +19,20 @@ export type Order = {
 }
 
 // This is a placeholder for a database.
-let orders: Order[] = [];
+let orders: Order[] = [
+    {
+        id: 'ord-1',
+        clientId: '2',
+        clientName: 'Restaurante El Buen Sabor',
+        items: [
+            { productName: 'Cola', quantity: 12, price: 1.5 },
+            { productName: 'Water', quantity: 24, price: 1 }
+        ],
+        total: 42,
+        status: 'completed',
+        createdAt: new Date(),
+    }
+];
 
 export async function getOrders(): Promise<Order[]> {
     return Promise.resolve(orders);

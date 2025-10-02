@@ -1,3 +1,4 @@
+
 import type { SVGProps } from "react";
 
 export function ArrowIcon(props: SVGProps<SVGSVGElement>) {
@@ -12,8 +13,10 @@ export function ArrowIcon(props: SVGProps<SVGSVGElement>) {
             strokeLinejoin="round" 
             {...props}
         >
-            <path d="M12 5v14"/>
-            <path d="m19 12-7 7-7-7"/>
+            <path d="M12 19V5"/>
+            <path d="m5 12 7-7 7 7"/>
         </svg>
     );
 }
+
+    

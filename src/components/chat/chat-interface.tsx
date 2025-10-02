@@ -234,7 +234,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
                         <p className="font-semibold">¡Empieza por aquí!</p>
                         <p className="text-muted-foreground">Selecciona un cliente para simular una conversación.</p>
                       </div>
-                      <ArrowIcon className="h-12 w-12 -rotate-90 text-primary" />
+                      <ArrowIcon className="h-12 w-12 -rotate-180 text-primary" />
                   </div>
                 </PopoverContent>
               </Popover>

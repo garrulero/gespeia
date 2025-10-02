@@ -49,20 +49,8 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [clientList, setClientList] = useState<Client[]>([]);
-  const [showClientSelectionGuide, setShowClientSelectionGuide] = useState(false);
-
+  
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Show the guide whenever no client is selected.
-    // Use a small delay to prevent flickering on initial load or state changes.
-    const timer = setTimeout(() => {
-      setShowClientSelectionGuide(!activeClient);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [activeClient]);
-
 
   const fetchClients = async () => {
     const clients = await getClients();
@@ -111,8 +99,6 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
         title: "Ningún cliente seleccionado",
         description: "Por favor, selecciona un cliente antes de enviar un mensaje.",
       });
-      // Ensure the guide is shown if user tries to send a message without a client
-      setShowClientSelectionGuide(true);
       return;
     }
 
@@ -239,7 +225,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
                       <span>{activeClient}</span>
                   </div>
               )}
-              <Popover open={showClientSelectionGuide} onOpenChange={setShowClientSelectionGuide}>
+              <Popover open={!activeClient}>
                 <PopoverTrigger asChild>
                     <Dialog open={isClientDialogOpen} onOpenChange={handleOpenClientDialog}>
                         <DialogTrigger asChild>
@@ -323,5 +309,3 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
     </>
   );
 }
-
-    

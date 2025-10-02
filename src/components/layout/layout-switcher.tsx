@@ -31,7 +31,7 @@ export default function LayoutSwitcher({ layout, onLayoutChange }: LayoutSwitche
                     onClick={() => onLayoutChange(item.mode)}
                 >
                     {item.icon}
-                    <span className="hidden sm:inline">{item.label}</span>
+                    <span>{item.label}</span>
                 </Button>
             ))}
         </div>

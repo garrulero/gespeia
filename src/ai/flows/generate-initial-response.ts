@@ -39,7 +39,7 @@ const createOrderTool = ai.defineTool(
         inputSchema: z.object({
             clientId: z.string().describe("The ID of the client placing the order."),
             items: z.array(z.object({
-                productName: z.string().describe("The name of the product to order. This MUST be the `name` field from the product, not the brand."),
+                productName: z.string().describe("The name of the product to order. This MUST be the exact `name` field from the product data, not the brand or a combination."),
                 quantity: z.number().int().positive().describe("The quantity of the product to order."),
             })).describe("A list of items to include in the order.")
         }),
@@ -175,8 +175,9 @@ Your primary goal is to create orders for clients. To do this, you need a client
 
 5.  **Order Confirmation**: When an order is created successfully, you MUST confirm it with the user by saying "¡Pedido creado con éxito! Tu ID de pedido es {{order.orderId}} y el total es de \${{order.total}}." using the \`orderId\` and \`total\` from the \`createOrderTool\` output.
 
-**General Rules:**
+**Product & Order Rules:**
 - If you need information about beverages, use the \`getBeverageStock\` tool.
+- When you use \`createOrderTool\`, you MUST use the exact product \`name\` from the data you get from \`getBeverageStock\`. Do not use the brand or a combination of brand and name. For example, if a product is { name: 'Cola', brand: 'Coca-Cola' }, you must use 'Cola' as the \`productName\`.
 
 Conversation history:
 {{#each history}}

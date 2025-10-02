@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -227,54 +226,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
               )}
               <Popover open={!activeClient}>
                 <PopoverTrigger asChild>
-                    <Dialog open={isClientDialogOpen} onOpenChange={handleOpenClientDialog}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">Seleccionar Cliente</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Seleccionar o Crear Cliente</DialogTitle>
-                            </DialogHeader>
-                              <div className="space-y-4">
-                                  <h3 className="text-sm font-medium text-muted-foreground">Seleccionar un cliente existente</h3>
-                                  <ScrollArea className="h-48">
-                                      <div className="space-y-2 pr-4">
-                                          {clientList.length > 0 ? clientList.map(client => (
-                                              <Button 
-                                                  key={client.id} 
-                                                  variant="outline" 
-                                                  className="w-full justify-start"
-                                                  onClick={() => handleSetClient(client.phone)}
-                                              >
-                                                  <div className="flex flex-col items-start">
-                                                      <span className="font-semibold">{client.name}</span>
-                                                      <span className="text-xs text-muted-foreground">{client.phone}</span>
-                                                  </div>
-                                              </Button>
-                                          )) : (
-                                              <div className="text-center text-muted-foreground py-4">
-                                                  <Users className="mx-auto h-8 w-8" />
-                                                  <p className="text-sm">No hay clientes registrados.</p>
-                                              </div>
-                                          )}
-                                      </div>
-                                  </ScrollArea>
-                                  
-                                  <div className="space-y-2">
-                                      <h3 className="text-sm font-medium text-muted-foreground">O introducir teléfono para un nuevo cliente</h3>
-                                      <div className="flex items-center gap-2">
-                                          <Input
-                                              id="phone"
-                                              value={clientPhoneInput}
-                                              onChange={(e) => setClientPhoneInput(e.target.value)}
-                                              placeholder="Número de teléfono ficticio"
-                                          />
-                                          <Button onClick={() => handleSetClient(clientPhoneInput)} disabled={!clientPhoneInput}>Guardar</Button>
-                                      </div>
-                                  </div>
-                              </div>
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="outline" size="sm" onClick={() => handleOpenClientDialog(true)}>Seleccionar Cliente</Button>
                 </PopoverTrigger>
                 <PopoverContent side="bottom" align="end" className="w-auto">
                   <div className="flex items-center gap-4">
@@ -286,6 +238,51 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
                   </div>
                 </PopoverContent>
               </Popover>
+              <Dialog open={isClientDialogOpen} onOpenChange={handleOpenClientDialog}>
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>Seleccionar o Crear Cliente</DialogTitle>
+                      </DialogHeader>
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium text-muted-foreground">Seleccionar un cliente existente</h3>
+                            <ScrollArea className="h-48">
+                                <div className="space-y-2 pr-4">
+                                    {clientList.length > 0 ? clientList.map(client => (
+                                        <Button 
+                                            key={client.id} 
+                                            variant="outline" 
+                                            className="w-full justify-start"
+                                            onClick={() => handleSetClient(client.phone)}
+                                        >
+                                            <div className="flex flex-col items-start">
+                                                <span className="font-semibold">{client.name}</span>
+                                                <span className="text-xs text-muted-foreground">{client.phone}</span>
+                                            </div>
+                                        </Button>
+                                    )) : (
+                                        <div className="text-center text-muted-foreground py-4">
+                                            <Users className="mx-auto h-8 w-8" />
+                                            <p className="text-sm">No hay clientes registrados.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+                            
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-medium text-muted-foreground">O introducir teléfono para un nuevo cliente</h3>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id="phone"
+                                        value={clientPhoneInput}
+                                        onChange={(e) => setClientPhoneInput(e.target.value)}
+                                        placeholder="Número de teléfono ficticio"
+                                    />
+                                    <Button onClick={() => handleSetClient(clientPhoneInput)} disabled={!clientPhoneInput}>Guardar</Button>
+                                </div>
+                            </div>
+                        </div>
+                  </DialogContent>
+              </Dialog>
           </div>
         </header>
         <Tabs defaultValue="chat" className="flex flex-1 flex-col overflow-hidden">
@@ -309,3 +306,5 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
     </>
   );
 }
+
+    

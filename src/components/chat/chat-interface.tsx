@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -54,14 +53,16 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
 
   const { toast } = useToast();
 
-  // Show the guide on initial load if no client is selected
   useEffect(() => {
-    const hasSeenGuide = localStorage.getItem('hasSeenClientGuide');
-    if (!hasSeenGuide && !activeClient) {
-      const timer = setTimeout(() => setShowClientSelectionGuide(true), 1000); // Delay to allow UI to settle
-      return () => clearTimeout(timer);
-    }
+    // Show the guide whenever no client is selected.
+    // Use a small delay to prevent flickering on initial load or state changes.
+    const timer = setTimeout(() => {
+      setShowClientSelectionGuide(!activeClient);
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [activeClient]);
+
 
   const fetchClients = async () => {
     const clients = await getClients();
@@ -70,12 +71,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
 
   const handleOpenClientDialog = (isOpen: boolean) => {
     if (isOpen) {
-      // When opening the dialog, fetch clients and close the guide
       fetchClients();
-      if (showClientSelectionGuide) {
-        setShowClientSelectionGuide(false);
-        localStorage.setItem('hasSeenClientGuide', 'true');
-      }
     }
     setIsClientDialogOpen(isOpen);
   }
@@ -98,11 +94,6 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
         title: "Cliente seleccionado",
         description: `Los pedidos se realizarán para el teléfono: ${phone}`,
       });
-      // Hide guide if it was open
-      if (showClientSelectionGuide) {
-        setShowClientSelectionGuide(false);
-        localStorage.setItem('hasSeenClientGuide', 'true');
-      }
     }
   };
 
@@ -120,6 +111,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
         title: "Ningún cliente seleccionado",
         description: "Por favor, selecciona un cliente antes de enviar un mensaje.",
       });
+      // Ensure the guide is shown if user tries to send a message without a client
       setShowClientSelectionGuide(true);
       return;
     }
@@ -331,3 +323,5 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
     </>
   );
 }
+
+    

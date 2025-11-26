@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ShoppingCart } from 'lucide-react';
+import { PlusCircle, ShoppingCart, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -40,7 +51,7 @@ import {
 } from '@/components/ui/select';
 import { getBeverageStock, Product } from '@/services/beverage-service';
 import { getClients, Client } from '@/services/client-service';
-import { addOrder, getOrders, Order, OrderItem } from '@/services/order-service';
+import { addOrder, getOrders, deleteOrder, Order, OrderItem } from '@/services/order-service';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
 
@@ -95,11 +106,32 @@ export default function OrderManager() {
       await fetchAllData();
       form.reset();
       setIsDialogOpen(false);
+      toast({
+        title: 'Éxito',
+        description: 'Pedido creado correctamente.',
+      });
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
         description: error instanceof Error ? error.message : "Failed to create order.",
+      });
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      await deleteOrder(orderId);
+      await fetchAllData();
+      toast({
+        title: 'Éxito',
+        description: 'Pedido eliminado correctamente.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error instanceof Error ? error.message : "Failed to delete order.",
       });
     }
   };
@@ -213,8 +245,9 @@ export default function OrderManager() {
                     <TableHead>ID Pedido</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Artículos</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Total</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,9 +260,32 @@ export default function OrderManager() {
                                 <div key={item.productName}>{item.quantity} x {item.productName}</div>
                             ))}
                         </TableCell>
-                        <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+                        <TableCell>${order.total.toFixed(2)}</TableCell>
                         <TableCell>
                             <Badge>{order.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="icon">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. El pedido será eliminado permanentemente y el stock de los productos será restaurado.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteOrder(order.id)}>
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                     </TableRow>
                 ))}

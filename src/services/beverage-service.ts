@@ -37,9 +37,14 @@ export async function addBeverage(product: Product): Promise<Product[]> {
 export async function updateStock(productName: string, quantityChange: number): Promise<void> {
     const product = await findProduct(productName);
     if (!product) {
-        throw new Error(`Product "${productName}" not found.`);
+        // When deleting an order, a product might not exist anymore.
+        // We can choose to ignore this or log it. For now, we'll ignore.
+        console.warn(`Product "${productName}" not found during stock update. Skipping.`);
+        return Promise.resolve();
     }
-    if (product.stock < quantityChange) {
+    // A positive quantityChange means a sale (reduce stock)
+    // A negative quantityChange means a return/deletion (increase stock)
+    if (quantityChange > 0 && product.stock < quantityChange) {
         throw new Error(`Not enough stock for "${productName}". Only ${product.stock} available.`);
     }
     product.stock -= quantityChange;

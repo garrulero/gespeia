@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 import { findProduct, updateStock, Product } from './beverage-service';
 import { findClientById } from './client-service';
@@ -78,4 +78,25 @@ export async function addOrder(items: OrderItem[], clientId: string): Promise<Or
 
     orders.unshift(newOrder);
     return Promise.resolve(newOrder);
+}
+
+
+export async function deleteOrder(id: string): Promise<void> {
+    const orderIndex = orders.findIndex(order => order.id === id);
+    if (orderIndex === -1) {
+        throw new Error(`Order with id "${id}" not found.`);
+    }
+
+    const orderToDelete = orders[orderIndex];
+
+    // Restore stock for each item in the order
+    for (const item of orderToDelete.items) {
+        // We pass a negative quantity to add the stock back
+        await updateStock(item.productName, -item.quantity);
+    }
+
+    // Remove the order from the array
+    orders.splice(orderIndex, 1);
+    
+    return Promise.resolve();
 }

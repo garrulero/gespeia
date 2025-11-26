@@ -242,7 +242,7 @@ export default function OrderManager() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>ID Pedido</TableHead>
+                    <TableHead className="hidden md:table-cell">ID Pedido</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Artículos</TableHead>
                     <TableHead>Total</TableHead>
@@ -253,7 +253,7 @@ export default function OrderManager() {
             <TableBody>
                 {orders.map(order => (
                     <TableRow key={order.id}>
-                        <TableCell className="font-mono text-xs">{order.id}</TableCell>
+                        <TableCell className="hidden md:table-cell font-mono text-xs">{order.id}</TableCell>
                         <TableCell>{order.clientName}</TableCell>
                         <TableCell>
                             {order.items.map(item => (

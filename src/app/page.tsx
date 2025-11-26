@@ -43,10 +43,13 @@ export default function Home() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <header className="flex items-center justify-center border-b bg-primary px-4 py-3 text-primary-foreground shadow-md gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Vista:</span>
-          <LayoutSwitcher layout={layout} onLayoutChange={setLayout} />
+      <header className="flex items-center justify-between border-b bg-primary px-4 py-3 text-primary-foreground shadow-md gap-4">
+        <div className="text-sm font-semibold bg-black/20 text-white/90 px-2 py-1 rounded">v0.0</div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Vista:</span>
+            <LayoutSwitcher layout={layout} onLayoutChange={setLayout} />
+          </div>
         </div>
       </header>
       <main className="flex-1 overflow-hidden">

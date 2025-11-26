@@ -54,6 +54,7 @@ import { getClients, Client } from '@/services/client-service';
 import { addOrder, getOrders, deleteOrder, Order, OrderItem } from '@/services/order-service';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 const orderItemSchema = z.object({
   productName: z.string().min(1, "Product is required"),
@@ -239,10 +240,10 @@ export default function OrderManager() {
         </Dialog>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table className="min-w-[650px]">
             <TableHeader>
                 <TableRow>
-                    <TableHead className="hidden md:table-cell">ID Pedido</TableHead>
+                    <TableHead>ID Pedido</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Artículos</TableHead>
                     <TableHead>Total</TableHead>
@@ -253,7 +254,7 @@ export default function OrderManager() {
             <TableBody>
                 {orders.map(order => (
                     <TableRow key={order.id}>
-                        <TableCell className="hidden md:table-cell font-mono text-xs">{order.id}</TableCell>
+                        <TableCell className="font-mono text-xs">{order.id}</TableCell>
                         <TableCell>{order.clientName}</TableCell>
                         <TableCell>
                             {order.items.map(item => (

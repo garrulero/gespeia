@@ -21,6 +21,11 @@ import {
 export default function Home() {
   const [layout, setLayout] = useState<LayoutMode>('split');
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(true);
+  const [dataVersion, setDataVersion] = useState(0);
+
+  const triggerDataRefresh = () => {
+    setDataVersion(prev => prev + 1);
+  };
 
   return (
     <>
@@ -53,17 +58,16 @@ export default function Home() {
             "hidden": layout === 'chat',
             "block": layout === 'app' || layout === 'split',
           })}>
-            <BeverageManager />
+            <BeverageManager dataVersion={dataVersion} />
           </div>
           <div className={cn("h-full overflow-y-auto", {
             "hidden": layout === 'app',
             "block": layout === 'chat' || layout === 'split',
           })}>
-            <ChatInterface onLayoutChange={setLayout} />
+            <ChatInterface onLayoutChange={setLayout} onOrderCreated={triggerDataRefresh} />
           </div>
         </div>
       </main>
     </>
   );
 }
-

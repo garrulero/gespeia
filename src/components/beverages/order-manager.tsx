@@ -66,7 +66,11 @@ const orderSchema = z.object({
   items: z.array(orderItemSchema).min(1, "Order must have at least one item"),
 });
 
-export default function OrderManager() {
+type OrderManagerProps = {
+  dataVersion: number;
+};
+
+export default function OrderManager({ dataVersion }: OrderManagerProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -86,7 +90,7 @@ export default function OrderManager() {
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [dataVersion]);
 
   const form = useForm<z.infer<typeof orderSchema>>({
     resolver: zodResolver(orderSchema),

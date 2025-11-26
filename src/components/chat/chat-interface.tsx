@@ -34,11 +34,12 @@ import { ArrowIcon } from '../icons/arrow-icon';
 
 type ChatInterfaceProps = {
   onLayoutChange: (mode: LayoutMode) => void;
+  onOrderCreated: () => void;
 };
 
 const MESSAGE_LIMIT = 100;
 
-export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
+export default function ChatInterface({ onLayoutChange, onOrderCreated }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [debugEvents, setDebugEvents] = useState<Event[]>([]);
@@ -142,6 +143,7 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
         
         if (result.order) {
             addDebugEvent(`Order ${result.order.orderId} created`, result.order, 'info');
+            onOrderCreated(); // Notify parent that an order was created
         }
     } else {
         const errorMessage = result.error || "An unknown error occurred.";
@@ -228,13 +230,13 @@ export default function ChatInterface({ onLayoutChange }: ChatInterfaceProps) {
                 <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" onClick={() => handleOpenClientDialog(true)}>Seleccionar Cliente</Button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="end" className="w-auto">
-                  <div className="flex items-center gap-4">
+                <PopoverContent side="bottom" align="end" className="w-auto p-4">
+                  <div className="flex items-start gap-4">
                       <div className="space-y-1 text-sm">
                         <p className="font-semibold">¡Empieza por aquí!</p>
                         <p className="text-muted-foreground">Selecciona un cliente para simular una conversación.</p>
                       </div>
-                      <ArrowIcon className="h-12 w-12 text-primary" />
+                      <ArrowIcon className="h-10 w-10 text-primary shrink-0" />
                   </div>
                 </PopoverContent>
               </Popover>

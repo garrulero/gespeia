@@ -5,7 +5,11 @@ import ProductManager from "@/components/beverages/product-manager";
 import OrderManager from "@/components/beverages/order-manager";
 import ClientManager from "@/components/beverages/client-manager";
 
-export default function BeverageManager() {
+type BeverageManagerProps = {
+  dataVersion: number;
+};
+
+export default function BeverageManager({ dataVersion }: BeverageManagerProps) {
   return (
     <div className="p-4 md:p-6">
        <Tabs defaultValue="products">
@@ -18,7 +22,7 @@ export default function BeverageManager() {
             <ProductManager />
         </TabsContent>
         <TabsContent value="orders">
-            <OrderManager />
+            <OrderManager dataVersion={dataVersion} />
         </TabsContent>
         <TabsContent value="clients">
             <ClientManager />

@@ -1,0 +1,74 @@
+diff --git a/node_modules/genkitx-groq/lib/groq_models.js b/node_modules/genkitx-groq/lib/groq_models.js
+index dcbdf91..5b15948 100644
+--- a/node_modules/genkitx-groq/lib/groq_models.js
++++ b/node_modules/genkitx-groq/lib/groq_models.js
+@@ -305,6 +305,22 @@ const deepseekR1DistillLlamax70b = (0, import_model.modelRef)({
+   configSchema: GroqConfigSchema,
+   version: "deepseek-r1-distill-llama-70b"
+ });
++const qwen36x27b = (0, import_model.modelRef)({
++  name: "groq/qwen/qwen3.6-27b",
++  info: {
++    versions: ["qwen/qwen3.6-27b"],
++    label: "Qwen 3.6 27B",
++    supports: {
++      multiturn: true,
++      tools: true,
++      media: false,
++      systemRole: true,
++      output: ["text", "json"]
++    }
++  },
++  configSchema: GroqConfigSchema,
++  version: "qwen/qwen3.6-27b"
++});
+ const SUPPORTED_GROQ_MODELS = {
+   "llama-3-8b": llama3x8b,
+   "llama-3-70b": llama3x70b,
+@@ -317,7 +333,8 @@ const SUPPORTED_GROQ_MODELS = {
+   "gemma2-9b": gemma2x9b,
+   "qwen-qwq-32b": qwenqwqx32b,
+   "deepseek-r1-distill-llama-70b": deepseekR1DistillLlamax70b,
+-  "allam-2-7b": allam2x7b
++  "allam-2-7b": allam2x7b,
++  "qwen/qwen3.6-27b": qwen36x27b
+ };
+ function toGroqRole(role) {
+   switch (role) {
+diff --git a/node_modules/genkitx-groq/lib/groq_models.mjs b/node_modules/genkitx-groq/lib/groq_models.mjs
+index c42af2b..ded56b1 100644
+--- a/node_modules/genkitx-groq/lib/groq_models.mjs
++++ b/node_modules/genkitx-groq/lib/groq_models.mjs
+@@ -236,6 +236,22 @@ const deepseekR1DistillLlamax70b = modelRef({
+   configSchema: GroqConfigSchema,
+   version: "deepseek-r1-distill-llama-70b"
+ });
++const qwen36x27b = modelRef({
++  name: "groq/qwen/qwen3.6-27b",
++  info: {
++    versions: ["qwen/qwen3.6-27b"],
++    label: "Qwen 3.6 27B",
++    supports: {
++      multiturn: true,
++      tools: true,
++      media: false,
++      systemRole: true,
++      output: ["text", "json"]
++    }
++  },
++  configSchema: GroqConfigSchema,
++  version: "qwen/qwen3.6-27b"
++});
+ const SUPPORTED_GROQ_MODELS = {
+   "llama-3-8b": llama3x8b,
+   "llama-3-70b": llama3x70b,
+@@ -248,7 +264,8 @@ const SUPPORTED_GROQ_MODELS = {
+   "gemma2-9b": gemma2x9b,
+   "qwen-qwq-32b": qwenqwqx32b,
+   "deepseek-r1-distill-llama-70b": deepseekR1DistillLlamax70b,
+-  "allam-2-7b": allam2x7b
++  "allam-2-7b": allam2x7b,
++  "qwen/qwen3.6-27b": qwen36x27b
+ };
+ function toGroqRole(role) {
+   switch (role) {

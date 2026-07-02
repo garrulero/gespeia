@@ -18,8 +18,9 @@ export async function getClients(): Promise<Client[]> {
   return Promise.resolve(clients);
 }
 
-export async function findClientById(id: string): Promise<Client | undefined> {
-    return Promise.resolve(clients.find(c => c.id === id));
+export async function findClientById(id: string | number): Promise<Client | undefined> {
+    const stringId = String(id).trim();
+    return Promise.resolve(clients.find(c => c.id === stringId));
 }
 
 export async function findClientByName(name: string): Promise<Client | undefined> {

@@ -38,7 +38,7 @@ export async function getOrders(): Promise<Order[]> {
     return Promise.resolve(orders);
 }
 
-export async function addOrder(items: OrderItem[], clientId: string): Promise<Order> {
+export async function addOrder(items: OrderItem[], clientId: string | number): Promise<Order> {
     let total = 0;
     const processedItems = [];
 

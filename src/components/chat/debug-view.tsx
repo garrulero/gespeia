@@ -4,7 +4,9 @@ import { Message } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { ScrollArea } from "../ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
-import { AlertCircle, Bot, Code, Cog } from "lucide-react";
+import { AlertCircle, Bot, Code, Cog, Copy } from "lucide-react";
+import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export type Event = {
   timestamp: string;
@@ -25,6 +27,7 @@ const iconMap = {
 }
 
 export function DebugView({ events }: DebugViewProps) {
+  const { toast } = useToast();
   const sortedEvents = [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   
   const rawInputs = sortedEvents.filter(e => e.type === 'input');
@@ -79,9 +82,26 @@ export function DebugView({ events }: DebugViewProps) {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent>
-                            <pre className="text-sm bg-muted p-2 rounded-md overflow-x-auto">
-                                {JSON.stringify(event.data, null, 2) || event.message}
-                            </pre>
+                            <div className="relative group">
+                                {event.type === 'error' && (
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="absolute right-2 top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => {
+                                            const text = JSON.stringify(event.data, null, 2) || event.message;
+                                            navigator.clipboard.writeText(text);
+                                            toast({ title: "Error copiado", description: "El output se ha copiado al portapapeles." });
+                                        }}
+                                        title="Copiar error"
+                                    >
+                                        <Copy className="h-3 w-3" />
+                                    </Button>
+                                )}
+                                <pre className="text-sm bg-muted p-3 rounded-md overflow-x-auto min-h-[3rem]">
+                                    {JSON.stringify(event.data, null, 2) || event.message}
+                                </pre>
+                            </div>
                         </AccordionContent>
                     </AccordionItem>
                 ))}

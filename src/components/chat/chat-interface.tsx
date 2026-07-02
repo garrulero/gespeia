@@ -7,6 +7,7 @@ import { getGeminiResponse } from '@/app/actions';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DebugView, Event } from './debug-view';
 import { Button } from '../ui/button';
@@ -164,12 +165,14 @@ export default function ChatInterface({ onLayoutChange, onOrderCreated }: ChatIn
                 variant: "destructive",
                 title: "Servicio no disponible",
                 description: "El modelo de IA está sobrecargado. Inténtalo más tarde.",
+                action: <ToastAction altText="Copiar error" onClick={() => navigator.clipboard.writeText(errorMessage)}>Copiar</ToastAction>,
             });
         } else {
             toast({
                 variant: "destructive",
                 title: "Error",
                 description: errorMessage,
+                action: <ToastAction altText="Copiar error" onClick={() => navigator.clipboard.writeText(errorMessage)}>Copiar</ToastAction>,
             });
         }
 

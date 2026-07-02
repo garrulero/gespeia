@@ -1,7 +1,7 @@
 import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
+import {groq} from 'genkitx-groq';
 
 export const ai = genkit({
-  plugins: [googleAI()],
-  model: 'googleai/gemini-flash-latest',
+  plugins: [groq()],
+  model: 'groq/qwen/qwen3.6-27b',
 });

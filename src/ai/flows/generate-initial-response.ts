@@ -37,7 +37,7 @@ const createOrderTool = ai.defineTool(
         name: 'createOrder',
         description: 'Create a new order for one or more beverages for a given client. This also adjusts the stock.',
         inputSchema: z.object({
-            clientId: z.string().describe("The ID of the client placing the order."),
+            clientId: z.union([z.string(), z.number()]).transform(String).describe("The ID of the client placing the order."),
             items: z.array(z.object({
                 productName: z.string().describe("The name of the product to order. This MUST be the exact `name` field from the product data, not the brand or a combination."),
                 quantity: z.number().int().positive().describe("The quantity of the product to order."),
@@ -61,7 +61,7 @@ const findClientByPhoneTool = ai.defineTool(
   {
     name: 'findClientByPhone',
     description: "Finds a client by their phone number. Returns the client object or an error if not found.",
-    inputSchema: z.object({ phone: z.string().describe('The phone number of the client.') }),
+    inputSchema: z.object({ phone: z.union([z.string(), z.number()]).transform(String).describe('The phone number of the client.') }),
     outputSchema: z.union([
         z.object({
             id: z.string(),
@@ -88,7 +88,7 @@ const createClientTool = ai.defineTool({
     description: 'Creates a new client. Use this after you have asked the user for their name and address.',
     inputSchema: z.object({
         name: z.string().describe('The full name of the client.'),
-        phone: z.string().describe('The phone number of the client.'),
+        phone: z.union([z.string(), z.number()]).transform(String).describe('The phone number of the client.'),
         address: z.string().describe('The full address of the client.'),
     }),
     outputSchema: z.union([
@@ -197,13 +197,13 @@ const generateInitialResponseFlow = ai.defineFlow(
   },
   async (input) => {
     const toolEvents: { tool: string; args: any; output?: any, processed: boolean }[] = [];
-    let llmResponse;
+    let llmResponse: any;
     try {
       llmResponse = await initialResponsePrompt(input);
     } catch (error: any) {
       if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
         // Retry with the fallback model if the primary is overloaded
-        llmResponse = await initialResponsePrompt(input, { model: 'googleai/gemini-2.5-pro' });
+        llmResponse = await initialResponsePrompt(input, { model: 'groq/qwen/qwen3.6-27b' });
       } else {
         // Re-throw other errors
         throw error;
@@ -211,16 +211,18 @@ const generateInitialResponseFlow = ai.defineFlow(
     }
 
 
-    while (llmResponse.toolRequest) {
-      
-      llmResponse.toolRequest.requests.forEach(req => {
-        toolEvents.push({ tool: req.tool, args: req.input, processed: false });
-      });
+    while (llmResponse.toolRequest || (llmResponse.toolRequests && llmResponse.toolRequests.length > 0)) {
+      const requests = llmResponse.toolRequest ? llmResponse.toolRequest.requests : llmResponse.toolRequests;
+      if (requests) {
+          requests.forEach((req: any) => {
+            toolEvents.push({ tool: req.tool || req.name, args: req.input || req.args, processed: false });
+          });
+      }
 
-      const toolResponse = await llmResponse.toolRequest.next();
+      const toolResponse = llmResponse.toolRequest ? await llmResponse.toolRequest.next() : await llmResponse.next();
 
       if (toolResponse.toolCalls) {
-        toolResponse.toolCalls.forEach((call) => {
+        toolResponse.toolCalls.forEach((call: any) => {
           const matchingEvent = toolEvents.find(
             (event) => event.tool === call.tool && !event.processed
           );
@@ -235,7 +237,7 @@ const generateInitialResponseFlow = ai.defineFlow(
     }
     
     // Check for createOrder tool call to extract order details
-    const createOrderEvent = toolEvents.find(tc => tc.tool === 'createOrder' && tc.output);
+    const createOrderEvent = toolEvents.find((tc: any) => tc.tool === 'createOrder' && tc.output);
 
     return {
         response: llmResponse.text,

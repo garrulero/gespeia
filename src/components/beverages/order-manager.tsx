@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ShoppingCart, Trash2 } from 'lucide-react';
+import { PlusCircle, ShoppingCart, Trash2, RefreshCw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -145,13 +145,18 @@ export default function OrderManager({ dataVersion }: OrderManagerProps) {
     <Card className="mt-4">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Pedidos</CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <PlusCircle className="mr-2" />
-              Crear Pedido
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => fetchAllData()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refrescar
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Crear Pedido
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Pedido</DialogTitle>
@@ -238,10 +243,11 @@ export default function OrderManager({ dataVersion }: OrderManagerProps) {
                 <Button type="submit" className="w-full">
                   Crear Pedido
                 </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table className="min-w-[650px]">

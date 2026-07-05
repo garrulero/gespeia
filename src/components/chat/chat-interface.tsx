@@ -134,6 +134,22 @@ export default function ChatInterface({ onLayoutChange, onOrderCreated }: ChatIn
                 content: result.response,
             };
             setMessages(prev => [...prev, assistantMessage]);
+        } else if (result.order) {
+            // Si hay un pedido pero no respuesta de texto, añadimos un mensaje de confirmación
+            const assistantMessage: Message = {
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content: `¡Hecho! He creado el pedido ${result.order.orderId} con éxito. ¿Necesitas algo más?`,
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+        } else {
+            // Si no hay respuesta ni pedido (ej. solo llamada a herramienta sin texto final)
+            const assistantMessage: Message = {
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content: "He procesado tu solicitud, pero no tengo una respuesta de texto detallada. ¿Hay algo más en lo que te pueda ayudar?",
+            };
+            setMessages(prev => [...prev, assistantMessage]);
         }
         
         if (result.toolCalls && result.toolCalls.length > 0) {
@@ -151,21 +167,25 @@ export default function ChatInterface({ onLayoutChange, onOrderCreated }: ChatIn
         addDebugEvent(errorMessage, undefined, 'error');
 
         const lowerCaseError = errorMessage.toLowerCase();
+        let fallbackResponse = "Ha ocurrido un error inesperado al procesar tu solicitud. Por favor, intenta reformularla o hacerla en partes más pequeñas.";
 
         if (lowerCaseError.includes("429") || lowerCaseError.includes("quota")) {
             setIsQuotaModalOpen(true);
+            fallbackResponse = "He superado mi límite de uso (cuota) en este momento. Por favor, inténtalo más tarde.";
         } else if (lowerCaseError.includes("503") || lowerCaseError.includes("overloaded")) {
-             const serviceUnavailableMessage: Message = {
-                id: crypto.randomUUID(),
-                role: 'assistant',
-                content: "Lo siento, el servicio de IA está sobrecargado en este momento. Por favor, inténtalo de nuevo en unos momentos.",
-            };
-            setMessages(prev => [...prev, serviceUnavailableMessage]);
-            toast({
+             fallbackResponse = "Lo siento, el servicio de IA está sobrecargado en este momento. Por favor, inténtalo de nuevo en unos momentos.";
+             toast({
                 variant: "destructive",
                 title: "Servicio no disponible",
                 description: "El modelo de IA está sobrecargado. Inténtalo más tarde.",
                 action: <ToastAction altText="Copiar error" onClick={() => navigator.clipboard.writeText(errorMessage)}>Copiar</ToastAction>,
+            });
+        } else if (lowerCaseError.includes("413") || lowerCaseError.includes("too large") || lowerCaseError.includes("rate_limit_exceeded")) {
+            fallbackResponse = "La solicitud es demasiado grande para procesarla. Por favor, intenta hacer un pedido más pequeño o dividir tu consulta (ej. pidiendo menos tipos de productos a la vez).";
+            toast({
+                variant: "destructive",
+                title: "Solicitud demasiado grande",
+                description: "La cantidad de información superó el límite del modelo. Intenta ser más específico.",
             });
         } else {
             toast({
@@ -176,8 +196,14 @@ export default function ChatInterface({ onLayoutChange, onOrderCreated }: ChatIn
             });
         }
 
-      // remove the user message if the call fails
-      setMessages(messages);
+        // Mostrar el error como un mensaje del asistente para no romper el flujo
+        // IMPORTANTE: No borramos el mensaje del usuario (no hacemos setMessages(messages))
+        const errorAssistantMessage: Message = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: fallbackResponse,
+        };
+        setMessages(prev => [...prev, errorAssistantMessage]);
     }
 
     setIsLoading(false);

@@ -27,8 +27,9 @@ export async function findClientByName(name: string): Promise<Client | undefined
     return Promise.resolve(clients.find(c => c.name.toLowerCase() === name.toLowerCase()));
 }
 
-export async function findClientByPhone(phone: string): Promise<Client | null> {
-    const client = clients.find(c => c.phone.trim() === phone.trim());
+export async function findClientByPhone(phone: string | number): Promise<Client | null> {
+    const phoneStr = String(phone).trim();
+    const client = clients.find(c => String(c.phone).trim() === phoneStr);
     return Promise.resolve(client || null);
 }
 
